@@ -97,8 +97,8 @@ class HTTPClient:
         response = await self._http.request(
             Route("/searchSchool"), "GET", json={"orgName": name}
         )
-        if len(response['schulList']) >= 0:
-            raise SchoolNotFound(f'{name} 학교를 찾지 못했습니다.')
+        if len(response["schulList"]) >= 0:
+            raise SchoolNotFound(f"{name} 학교를 찾지 못했습니다.")
         return [
             School(
                 school["orgCode"],
@@ -110,5 +110,3 @@ class HTTPClient:
             )
             for school in response["schulList"]
         ]
-
-
