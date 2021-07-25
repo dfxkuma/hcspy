@@ -1,11 +1,20 @@
-from Crypto.Cipher import PKCS1_v1_5
-from Crypto.PublicKey import RSA
 from typing import Optional
 
 
+from base64 import b64decode, b64encode
+from Crypto.Cipher import PKCS1_v1_5
+from Crypto.PublicKey import RSA
+
+
 def encrypt_login(content: str) -> Optional[str]:
-    privatekey = "30820122300d06092a864886f70d01010105000382010f003082010a0282010100f357429c22add0d547ee3e4e876f921a0114d1aaa2e6eeac6177a6a2e2565ce9593b78ea0ec1d8335a9f12356f08e99ea0c3455d849774d85f954ee68d63fc8d6526918210f28dc51aa333b0c4cdc6bf9b029d1c50b5aef5e626c9c8c9c16231c41eef530be91143627205bbbf99c2c261791d2df71e69fbc83cdc7e37c1b3df4ae71244a691c6d2a73eab7617c713e9c193484459f45adc6dd0cba1d54f1abef5b2c34dee43fc0c067ce1c140bc4f81b935c94b116cce404c5b438a0395906ff0133f5b1c6e3b2bb423c6c350376eb4939f44461164195acc51ef44a34d4100f6a837e3473e3ce2e16cedbe67ca48da301f64fc4240b878c9cc6b3d30c316b50203010001"
-    rsa_key = RSA.importKey(privatekey)
-    cipher = PKCS1_v1_5.new(rsa_key)
-    decrypted = cipher.encrypt(content)
-    return decrypted
+    pubkey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA81dCnCKt0NVH7j5Oh2+SGgEU0aqi5u6sYXemouJWXOlZO3jqDsHYM1qfEjVvCOmeoMNFXYSXdNhflU7mjWP8jWUmkYIQ8o3FGqMzsMTNxr+bAp0cULWu9eYmycjJwWIxxB7vUwvpEUNicgW7v5nCwmF5HS33Hmn7yDzcfjfBs99K5xJEppHG0qc+q3YXxxPpwZNIRFn0Wtxt0Muh1U8avvWyw03uQ/wMBnzhwUC8T4G5NclLEWzOQExbQ4oDlZBv8BM/WxxuOyu0I8bDUDdutJOfREYRZBlazFHvRKNNQQD2qDfjRz484uFs7b5nykjaMB9k/EJAuHjJzGs9MMMWtQIDAQAB=="
+    rsa_public_key = b64decode(pubkey)
+    pub_key = RSA.importKey(rsa_public_key)
+    cipher = PKCS1_v1_5.new(pub_key)
+    msg = content.encode("utf-8")
+    length = 245
+    msg_list = [msg[i : i + length] for i in list(range(0, len(msg), length))]
+    encrypt_msg_list = [
+        b64encode(cipher.encrypt(message=msg_str)) for msg_str in msg_list
+    ]
+    return encrypt_msg_list[0].decode("utf-8")
