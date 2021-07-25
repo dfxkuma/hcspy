@@ -2,7 +2,8 @@ import aiohttp
 from typing import ClassVar, Any, Optional, Literal, Dict
 from urllib.parse import quote as _uriquote
 
-from .errors import HTTPException
+from .errors import HTTPException, SchoolNotFound
+from .model import School
 
 
 async def content_type(response):
@@ -12,7 +13,7 @@ async def content_type(response):
 
 
 class Route:
-    BASE: ClassVar[str] = "https://hcs.eduro.go.kr"
+    BASE: ClassVar[str] = "https://hcs.eduro.go.kr/v2"
 
     def __init__(self, method: str, path: str, **parameters: Any) -> None:
         self.path: str = path
@@ -88,6 +89,26 @@ class HTTPRequest:
         return data
 
 
-class HTTPClient(HTTPRequest):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class HTTPClient:
+    def __init__(self):
+        self._http = HTTPRequest()
+
+    async def search_school(self, name: str) -> Any:
+        response = await self._http.request(
+            Route("/searchSchool"), "GET", json={"orgName": name}
+        )
+        if len(response['schulList']) >= 0:
+            raise SchoolNotFound(f'{name} 학교를 찾지 못했습니다.')
+        return [
+            School(
+                school["orgCode"],
+                school["kraOrgNm"],
+                school["engOrgNm"],
+                school["lctnScNm"],
+                school["addres"],
+                school["atptOfcdcConctUrl"],
+            )
+            for school in response["schulList"]
+        ]
+
+
