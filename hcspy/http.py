@@ -2,8 +2,9 @@ import aiohttp
 from typing import ClassVar, Any, Optional, Literal, Dict
 from urllib.parse import quote as _uriquote
 
-from .errors import HTTPException, SchoolNotFound
+from .errors import HTTPException, SchoolNotFound, AuthorizeError, PasswordLengthError
 from .model import School
+from .utils import encrypt_login
 
 
 async def content_type(response):
@@ -27,6 +28,14 @@ class Route:
                 }
             )
         self.url: str = url
+
+    @property
+    def endpoint(self) -> str:
+        return self.BASE
+
+    @endpoint.setter
+    def endpoint(self, value) -> None:
+        self.BASE = value
 
 
 class HTTPRequest:
@@ -69,9 +78,7 @@ class HTTPRequest:
         if not self.__session:
             self.__session = aiohttp.ClientSession(connector=self.connector)
         if not headers:
-            headers: Dict[str, str] = {
-                "User-Agent": self.user_agent,
-            }
+            headers: Dict[str, str] = {}
         headers = self.set_header(headers)
 
         if "json" in kwargs:
@@ -99,14 +106,49 @@ class HTTPClient:
         )
         if len(response["schulList"]) >= 0:
             raise SchoolNotFound(f"{name} 학교를 찾지 못했습니다.")
-        return [
-            School(
-                school["orgCode"],
-                school["kraOrgNm"],
-                school["engOrgNm"],
-                school["lctnScNm"],
-                school["addres"],
-                school["atptOfcdcConctUrl"],
+        return response["schulList"]
+
+    async def get_token(
+        self, endpoint: str, code: str, name: str, birthday: str
+    ) -> Any:
+        route = Route("/findUser").endpoint = endpoint
+        try:
+            response = await self._http.request(
+                route,
+                "POST",
+                json={
+                    "birthday": encrypt_login(birthday),
+                    "loginType": "school",
+                    "name": encrypt_login(name),
+                    "orgCode": code,
+                    "stdntPHo": None,
+                },
             )
-            for school in response["schulList"]
-        ]
+            return response
+        except HTTPException as e:
+            if e.code == 500:
+                raise AuthorizeError("입력한 정보가 일치하지 않습니다.")
+
+    async def update_agreement(self, endpoint: str, token: str) -> Any:
+        route = Route("/updatePInfAgrmYn").endpoint = endpoint
+        response = await self._http.request(
+            route, "POST", headers={"Authorization": token}
+        )
+        return response
+
+    async def password_exist(self, endpoint: str, token: str) -> Any:
+        route = Route("/hasPassword").endpoint = endpoint
+        response = await self._http.request(
+            route, "POST", headers={"Authorization": token}
+        )
+        return response
+
+    async def register_password(self, endpoint: str, token: str, password: str):
+        if len(password) != 4:
+            raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
+        data = {"deviceUuid": "", "password": encrypt_login(password)}
+        route = Route("/registerPassword").endpoint = endpoint
+        response = await self._http.request(
+            route, "POST", json=data, headers={"Authorization": token}
+        )
+        return response

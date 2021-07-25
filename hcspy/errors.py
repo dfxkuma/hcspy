@@ -15,3 +15,11 @@ class HTTPException(HCSException):
 
 class SchoolNotFound(HCSException):
     pass
+
+
+class AuthorizeError(HCSException):
+    pass
+
+
+class PasswordLengthError(HCSException):
+    pass
