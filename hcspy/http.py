@@ -3,7 +3,6 @@ from typing import ClassVar, Any, Optional, Literal, Dict
 from urllib.parse import quote as _uriquote
 
 from .errors import HTTPException, SchoolNotFound, AuthorizeError, PasswordLengthError
-from .model import School
 from .utils import encrypt_login
 from .transkey import MTransKey
 from json import dumps
@@ -84,7 +83,7 @@ class HTTPRequest:
         headers = self.set_header(headers)
 
         if "json" in kwargs:
-            ContentType: str = "x-www-form-urlencoded" if method is "GET" else "json"
+            ContentType: str = "x-www-form-urlencoded" if method == "GET" else "json"
             headers["Content-Type"] = f"application/{ContentType};charset=UTF-8"
         if self._cookie_jar:
             kwargs["cookie_jar"] = self._cookie_jar
