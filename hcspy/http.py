@@ -5,6 +5,8 @@ from urllib.parse import quote as _uriquote
 from .errors import HTTPException, SchoolNotFound, AuthorizeError, PasswordLengthError
 from .model import School
 from .utils import encrypt_login
+from .transkey import MTransKey
+from json import dumps
 
 
 async def content_type(response):
@@ -98,7 +100,8 @@ class HTTPRequest:
 
 class HTTPClient:
     def __init__(self):
-        self._http = HTTPRequest()
+        self._session = aiohttp.ClientSession()
+        self._http = HTTPRequest(session=self._session)
 
     async def search_school(self, name: str) -> Any:
         response = await self._http.request(
@@ -179,3 +182,53 @@ class HTTPClient:
         response = await self._http.request(
             route, "POST", json=data, headers={"Authorization": token}
         )
+        return response
+
+    async def change_password(
+        self, endpoint: str, token: str, password: str, new_password: str
+    ) -> Any:
+        if len(password) != 4 or len(new_password) != 4:
+            raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
+        route = Route("/changePassword").endpoint = endpoint
+        data = {
+            "password": encrypt_login(password),
+            "newPassword": encrypt_login(new_password),
+        }
+        response = await self._http.request(
+            route, "POST", json=data, headers={"Authorization": token}
+        )
+        return response
+
+    async def transkey(self, endpoint: str, token: str, password: str) -> Any:
+        mtk = MTransKey()
+        keypad = await mtk.new_keypad(
+            "number", "password", "password", "password", session=self.__session
+        )
+        encrypted = await keypad.encrypt_password(password)
+        hm = await mtk.hmac_digest(encrypted.encode())
+        route = Route("/validatePassword").endpoint = endpoint
+        data = {
+            "password": dumps(
+                {
+                    "raon": [
+                        {
+                            "id": "password",
+                            "enc": encrypted,
+                            "hmac": hm,
+                            "keyboardType": "number",
+                            "keyIndex": mtk.crypto.rsa_encrypt(b"32"),
+                            "fieldType": "password",
+                            "seedKey": mtk.crypto.get_encrypted_key(),
+                            "initTime": mtk.initTime,
+                            "ExE2E": "false",
+                        }
+                    ]
+                },
+            ),
+            "deviceUuid": "",
+            "makeSession": True,
+        }
+        response = await self._http.request(
+            route, "POST", json=data, headers={"Authorization": token}
+        )
+        return response
