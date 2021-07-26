@@ -1,11 +1,11 @@
 import aiohttp
 from typing import ClassVar, Any, Optional, Literal, Dict
 from urllib.parse import quote as _uriquote
+from json import dumps
 
 from .errors import HTTPException, SchoolNotFound, AuthorizeError, PasswordLengthError
 from .utils import encrypt_login
 from .transkey import MTransKey
-from json import dumps
 
 
 async def content_type(response):
@@ -17,7 +17,7 @@ async def content_type(response):
 class Route:
     BASE: ClassVar[str] = "https://hcs.eduro.go.kr/v2"
 
-    def __init__(self, method: str, path: str, **parameters: Any) -> None:
+    def __init__(self, method: Literal["GET", "POST"], path: str, **parameters: Any) -> None:
         self.path: str = path
         self.method: str = method
         url = self.BASE + self.path
@@ -70,7 +70,7 @@ class HTTPRequest:
         header["X-Requested-With"] = "XMLHttpRequest"
 
     async def request(
-        self, route: Route, method: Literal["GET", "POST"], **kwargs: Any
+        self, route: Route, **kwargs: Any
     ) -> Any:
         method = route.method
         url = route.url
@@ -113,11 +113,10 @@ class HTTPClient:
     async def get_token(
         self, endpoint: str, code: str, name: str, birthday: str
     ) -> Any:
-        route = Route("/findUser").endpoint = endpoint
+        route = Route("POST", "/findUser").endpoint = endpoint
         try:
             response = await self._http.request(
                 route,
-                "POST",
                 json={
                     "birthday": encrypt_login(birthday),
                     "loginType": "school",
@@ -132,16 +131,16 @@ class HTTPClient:
                 raise AuthorizeError("입력한 정보가 일치하지 않습니다.")
 
     async def update_agreement(self, endpoint: str, token: str) -> Any:
-        route = Route("/updatePInfAgrmYn").endpoint = endpoint
+        route = Route("POST", "/updatePInfAgrmYn").endpoint = endpoint
         response = await self._http.request(
-            route, "POST", headers={"Authorization": token}
+            route, headers={"Authorization": token}
         )
         return response
 
     async def password_exist(self, endpoint: str, token: str) -> Any:
-        route = Route("/hasPassword").endpoint = endpoint
+        route = Route("POST", "/hasPassword").endpoint = endpoint
         response = await self._http.request(
-            route, "POST", headers={"Authorization": token}
+            route, headers={"Authorization": token}
         )
         return response
 
@@ -149,19 +148,19 @@ class HTTPClient:
         if len(password) != 4:
             raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
         data = {"deviceUuid": "", "password": encrypt_login(password)}
-        route = Route("/registerPassword").endpoint = endpoint
+        route = Route("POST", "/registerPassword").endpoint = endpoint
         response = await self._http.request(
-            route, "POST", json=data, headers={"Authorization": token}
+            route, json=data, headers={"Authorization": token}
         )
         return response
 
     async def login(self, endpoint: str, token: str, password: str) -> Any:
         if len(password) != 4:
             raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
-        route = Route("/validatePassword").endpoint = endpoint
+        route = Route("POST", "/validatePassword").endpoint = endpoint
         data = {"deviceUuid": "", "password": encrypt_login(password)}
         response = await self._http.request(
-            route, "POST", json=data, headers={"Authorization": token}
+            route, json=data, headers={"Authorization": token}
         )
         if isinstance(response, dict) and response["isError"]:
             raise AuthorizeError("입력한 정보가 일치하지 않습니다.")
@@ -170,7 +169,7 @@ class HTTPClient:
     async def check_survey(
         self, endpoint: str, token: str, log_name: Optional[str] = None
     ) -> Any:
-        route = Route("/registerServey").endpoint = endpoint
+        route = Route("POST", "/registerServey").endpoint = endpoint
         data = {
             "rspns01": "1",
             "rspns02": "1",
@@ -179,7 +178,7 @@ class HTTPClient:
             "upperUserNameEncpt": log_name,
         }
         response = await self._http.request(
-            route, "POST", json=data, headers={"Authorization": token}
+            route, json=data, headers={"Authorization": token}
         )
         return response
 
@@ -188,13 +187,13 @@ class HTTPClient:
     ) -> Any:
         if len(password) != 4 or len(new_password) != 4:
             raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
-        route = Route("/changePassword").endpoint = endpoint
+        route = Route("POST", "/changePassword").endpoint = endpoint
         data = {
             "password": encrypt_login(password),
             "newPassword": encrypt_login(new_password),
         }
         response = await self._http.request(
-            route, "POST", json=data, headers={"Authorization": token}
+            route, json=data, headers={"Authorization": token}
         )
         return response
 
@@ -205,7 +204,7 @@ class HTTPClient:
         )
         encrypted = await keypad.encrypt_password(password)
         hm = await mtk.hmac_digest(encrypted.encode())
-        route = Route("/validatePassword").endpoint = endpoint
+        route = Route("POST", "/validatePassword").endpoint = endpoint
         data = {
             "password": dumps(
                 {
@@ -228,6 +227,6 @@ class HTTPClient:
             "makeSession": True,
         }
         response = await self._http.request(
-            route, "POST", json=data, headers={"Authorization": token}
+            route, json=data, headers={"Authorization": token}
         )
         return response
