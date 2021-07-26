@@ -1,8 +1,5 @@
 from random import randint
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .crypto import Crypto
+from .crypto import Crypto
 
 
 class KeyPad:
