@@ -110,7 +110,7 @@ class HTTPClient:
         self._session = session
         self._http = HTTPRequest(session=self._session)
 
-    async def _search_school(self, name: str) -> Any:
+    async def search_school(self, name: str) -> Any:
         response = await self._http.request(
             Route("/searchSchool"), "GET", json={"orgName": name}
         )
@@ -118,7 +118,7 @@ class HTTPClient:
             raise SchoolNotFound(f"{name} 학교를 찾지 못했습니다.")
         return response["schulList"]
 
-    async def _get_token(
+    async def get_token(
         self, endpoint: str, code: str, name: str, birthday: str
     ) -> Any:
         route = Route("POST", "/findUser").endpoint = endpoint
@@ -138,17 +138,17 @@ class HTTPClient:
             if e.code == 500:
                 raise AuthorizeError("입력한 정보가 일치하지 않습니다.")
 
-    async def _update_agreement(self, endpoint: str, token: str) -> Any:
+    async def update_agreement(self, endpoint: str, token: str) -> Any:
         route = Route("POST", "/updatePInfAgrmYn").endpoint = endpoint
         response = await self._http.request(route, headers={"Authorization": token})
         return response
 
-    async def _password_exist(self, endpoint: str, token: str) -> Any:
+    async def password_exist(self, endpoint: str, token: str) -> Any:
         route = Route("POST", "/hasPassword").endpoint = endpoint
         response = await self._http.request(route, headers={"Authorization": token})
         return response
 
-    async def _register_password(self, endpoint: str, token: str, password: str) -> Any:
+    async def register_password(self, endpoint: str, token: str, password: str) -> Any:
         if len(password) != 4:
             raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
         data = {"deviceUuid": "", "password": encrypt_login(password)}
@@ -158,7 +158,7 @@ class HTTPClient:
         )
         return response
 
-    async def _login(self, endpoint: str, token: str, password: str) -> Any:
+    async def login(self, endpoint: str, token: str, password: str) -> Any:
         if len(password) != 4:
             raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
         route = Route("POST", "/validatePassword").endpoint = endpoint
@@ -170,7 +170,7 @@ class HTTPClient:
             raise AuthorizeError("입력한 정보가 일치하지 않습니다.")
         return response
 
-    async def _check_survey(
+    async def check_survey(
         self, endpoint: str, token: str, log_name: Optional[str] = None
     ) -> Any:
         route = Route("POST", "/registerServey").endpoint = endpoint
@@ -186,7 +186,7 @@ class HTTPClient:
         )
         return response
 
-    async def _change_password(
+    async def change_password(
         self, endpoint: str, token: str, password: str, new_password: str
     ) -> Any:
         if len(password) != 4 or len(new_password) != 4:
@@ -201,7 +201,7 @@ class HTTPClient:
         )
         return response
 
-    async def _transkey(self, endpoint: str, token: str, password: str) -> Any:
+    async def transkey(self, endpoint: str, token: str, password: str) -> Any:
         mtk = MTransKey()
         keypad = await mtk.new_keypad(
             "number", "password", "password", "password", session=self.__session
