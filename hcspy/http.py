@@ -2,6 +2,7 @@ import aiohttp
 from typing import ClassVar, Any, Optional, Literal, Dict
 from urllib.parse import quote as _uriquote
 from json import dumps
+from asyncio import get_event_loop
 
 from .errors import HTTPException, SchoolNotFound, AuthorizeError, PasswordLengthError
 from .utils import encrypt_login
@@ -17,7 +18,9 @@ async def content_type(response):
 class Route:
     BASE: ClassVar[str] = "https://hcs.eduro.go.kr/v2"
 
-    def __init__(self, method: Literal["GET", "POST"], path: str, **parameters: Any) -> None:
+    def __init__(
+        self, method: Literal["GET", "POST"], path: str, **parameters: Any
+    ) -> None:
         self.path: str = path
         self.method: str = method
         url = self.BASE + self.path
@@ -42,10 +45,8 @@ class Route:
 class HTTPRequest:
     def __init__(
         self,
-        connector: Optional[aiohttp.BaseConnector] = None,
         session: Optional[aiohttp.ClientSession] = None,
     ):
-        self.connector = connector
         self.__session = session
         self._cookie_jar = aiohttp.CookieJar()
 
@@ -69,15 +70,13 @@ class HTTPRequest:
         ] = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1"
         header["X-Requested-With"] = "XMLHttpRequest"
 
-    async def request(
-        self, route: Route, **kwargs: Any
-    ) -> Any:
+    async def request(self, route: Route, **kwargs: Any) -> Any:
         method = route.method
         url = route.url
         headers = kwargs.get("headers", None)
 
         if not self.__session:
-            self.__session = aiohttp.ClientSession(connector=self.connector)
+            self.__session = aiohttp.ClientSession()
         if not headers:
             headers: Dict[str, str] = {}
         headers = self.set_header(headers)
@@ -96,10 +95,19 @@ class HTTPRequest:
 
         return data
 
+    def __del__(self) -> None:
+        if self.__session:
+            if not self.session.closed:
+                _loop = get_event_loop()
+                if _loop.is_running():
+                    _loop.create_task(self.session.close())
+                else:
+                    _loop.run_until_complete(self.session.close())
+
 
 class HTTPClient:
-    def __init__(self):
-        self._session = aiohttp.ClientSession()
+    def __init__(self, session: aiohttp.ClientSession = aiohttp.ClientSession()):
+        self._session = session
         self._http = HTTPRequest(session=self._session)
 
     async def search_school(self, name: str) -> Any:
@@ -132,16 +140,12 @@ class HTTPClient:
 
     async def update_agreement(self, endpoint: str, token: str) -> Any:
         route = Route("POST", "/updatePInfAgrmYn").endpoint = endpoint
-        response = await self._http.request(
-            route, headers={"Authorization": token}
-        )
+        response = await self._http.request(route, headers={"Authorization": token})
         return response
 
     async def password_exist(self, endpoint: str, token: str) -> Any:
         route = Route("POST", "/hasPassword").endpoint = endpoint
-        response = await self._http.request(
-            route, headers={"Authorization": token}
-        )
+        response = await self._http.request(route, headers={"Authorization": token})
         return response
 
     async def register_password(self, endpoint: str, token: str, password: str) -> Any:
