@@ -106,7 +106,9 @@ class HTTPRequest:
 
 
 class HTTPClient:
-    def __init__(self, session: aiohttp.ClientSession = aiohttp.ClientSession()):
+    def __init__(
+        self, session: aiohttp.ClientSession = aiohttp.ClientSession()
+    ) -> None:
         self._session = session
         self._http = HTTPRequest(session=self._session)
 
@@ -146,7 +148,7 @@ class HTTPClient:
     async def password_exist(self, endpoint: str, token: str) -> Any:
         route = Route("POST", "/hasPassword").endpoint = endpoint
         response = await self._http.request(route, headers={"Authorization": token})
-        return response
+        return bool(response)
 
     async def register_password(self, endpoint: str, token: str, password: str) -> Any:
         if len(password) != 4:
@@ -162,7 +164,11 @@ class HTTPClient:
         if len(password) != 4:
             raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
         route = Route("POST", "/validatePassword").endpoint = endpoint
-        data = {"deviceUuid": "", "password": encrypt_login(password)}
+        data = {
+            "deviceUuid": "",
+            "password": encrypt_login(password),
+            "makeSession": True,
+        }
         response = await self._http.request(
             route, json=data, headers={"Authorization": token}
         )
@@ -177,7 +183,21 @@ class HTTPClient:
         data = {
             "rspns01": "1",
             "rspns02": "1",
+            "rspns03": None,
+            "rspns04": None,
+            "rspns05": None,
+            "rspns06": None,
+            "rspns07": None,
+            "rspns08": None,
+            "rspns09": "0",
+            "rspns10": None,
+            "rspns11": None,
+            "rspns12": None,
+            "rspns13": None,
+            "rspns14": None,
+            "rspns15": None,
             "rspns00": "Y",
+            "deviceUuid": "",
             "upperToken": token,
             "upperUserNameEncpt": log_name,
         }
@@ -234,3 +254,57 @@ class HTTPClient:
             route, json=data, headers={"Authorization": token}
         )
         return response
+
+    async def get_group(self, endpoint: str, token: str) -> Any:
+        route = Route("POST", "/selectUserGroup").endpoint = endpoint
+        response = await self._http.request(
+            route, json={}, headers={"Authorization": token}
+        )
+        return response
+
+    async def get_user(self, endpoint: str, code: str, user_id: str, token: str) -> Any:
+        route = Route("POST", "/getUserinfo").endpoint = endpoint
+        response = await self._http.request(
+            route,
+            json={"orgCode": code, "userPNo": user_id},
+            headers={"Authorization": token},
+        )
+        return response
+
+    async def get_notice_list(
+        self, endpoint: str, token: str, page: int = 0, count: int = 30
+    ) -> Any:
+        route = Route(
+            "GET",
+            "/selectNoticeList?currentPageNumber={page}&listCount={count}",
+            page=page,
+            count=count,
+        ).endpoint = endpoint
+        response = await self._http.request(
+            route,
+            json={},
+            headers={"Authorization": token},
+        )
+        return response
+
+    async def get_notice_content(self, endpoint: str, token: str, code: str) -> Any:
+        route = Route(
+            "GET", "/selectNotice?idxNtc={code}", code=code
+        ).endpoint = endpoint
+        response = await self._http.request(
+            route,
+            json={},
+            headers={"Authorization": token},
+        )
+        return response["contentsNtc"]
+
+    async def logout(self, endpoint: str, token: str) -> Any:
+        route = Route("GET", "/logout").endpoint = endpoint
+        response = await self._http.request(
+            route,
+            json={},
+            headers={"Authorization": token},
+        )
+
+    async def close(self) -> Any:
+        await self._http.session.close()
