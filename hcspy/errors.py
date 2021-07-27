@@ -23,3 +23,11 @@ class AuthorizeError(HCSException):
 
 class PasswordLengthError(HCSException):
     pass
+
+
+class AlreadyChecked(HCSException):
+    pass
+
+
+class AlreadyAgreed(HCSException):
+    pass
