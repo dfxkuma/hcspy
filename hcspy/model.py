@@ -9,3 +9,15 @@ class School:
     city: str
     address: str
     endpoint: str
+
+
+@dataclasses.dataclass(repr=True)
+class Board:
+    id: str
+    title: str
+    popup: bool
+    create_date: str
+    group_code: str
+    group_name: str
+    author: str
+    content: str
