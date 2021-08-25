@@ -23,7 +23,7 @@ pip install hcspy
 
 [문서로 이동하기](https://github.com/decave27/hcspy)
 
-[예제코드 보기](https://github.com/decave27/hcspy)
+[예제코드 보기](https://github.com/decave27/hcspy/blob/main/example/example.md)
 
 ## 🔒 기능
 
