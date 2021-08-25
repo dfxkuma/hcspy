@@ -36,6 +36,24 @@ class User:
         self._http = kwargs.get("http_session")
         return self
 
+    async def password_exist(self) -> bool:
+        """비밀번호를 설정했는지 확인합니다."""
+        return await self._http.password_exist(
+            endpoint=self.school.endpoint, token=self._token
+        )
+
+    async def register_password(self, password: str) -> None:
+        """자가진단을 진행하기 위해 비밀번호를 생성합니다.
+
+        Parameters
+        ----------
+        password: str
+            설정할 비밀번호 4자리를 입력합니다.
+        """
+        await self._http.register_password(
+            endpoint=self.school.endpoint, token=self._token, password=password
+        )
+
     async def check(self, log_name: Optional[str] = None) -> None:
         """자가진단을 모두 증상 없음으로 체크합니다.
 
