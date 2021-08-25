@@ -7,39 +7,38 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Hash import SHA1
 from Crypto.PublicKey import RSA
 
-from .seed import SEED
+from . import seed
 
 
 class Crypto:
-    def __init__(self) -> None:
+    def __init__(self):
         self.uuid = os.urandom(int(32)).hex()
-        self.gen_session_key = os.urandom(int(8)).hex()
+        self.genSessionKey = os.urandom(int(8)).hex()
         self.key = None
-        self.session_key = [int(i, 16) for i in list(self.gen_session_key)]
+        self.sessionKey = [int(i, 16) for i in list(self.genSessionKey)]
 
-    @staticmethod
-    async def _pad(txt) -> bytes:
+    def _pad(self, txt):
         if len(txt) < 16:
             txt += b"\x00" * (16 - len(txt))
         return txt
 
-    async def rsa_encrypt(self, data: bytes) -> hex:
+    def rsa_encrypt(self, data):
         cipher = PKCS1_OAEP.new(key=self.key, hashAlgo=SHA1)
         return cipher.encrypt(data).hex()
 
-    async def get_encrypted_key(self) -> hex:
-        return await self.rsa_encrypt(self.gen_session_key.encode())
+    def get_encrypted_key(self):
+        return self.rsa_encrypt(self.genSessionKey.encode())
 
-    async def hmac_digest(self, msg: bytes) -> hex:
+    def hmac_digest(self, msg: bytes):
         return hmac.new(
-            msg=msg, key=self.gen_session_key.encode(), digestmod=hashlib.sha256
+            msg=msg, key=self.genSessionKey.encode(), digestmod=hashlib.sha256
         ).hexdigest()
 
-    async def seed_encrypt(self, iv, data) -> bytes:
-        s = SEED()
-        round_key = await s.seed_round_key(bytes(self.session_key))
-        return await s.my_cbc_encrypt(await self._pad(data), round_key, iv)
+    def seed_encrypt(self, iv, data):
+        s = seed.SEED()
+        round_key = s.SeedRoundKey(bytes(self.sessionKey))
+        return s.my_cbc_encrypt(self._pad(data), round_key, iv)
 
-    async def set_pub_key(self, b64: str) -> None:
+    def set_pub_key(self, b64):
         data = b64decode(b64)
         self.key = RSA.import_key(data)

@@ -1,63 +1,75 @@
 from random import randint
-from .crypto import Crypto
 
 
 class KeyPad:
-    def __init__(
-        self, crypto: Crypto, key_type: str, skip_data: dict, keys: list
-    ) -> None:
+    def __init__(self, crypto, key_type, skip_data, keys, initTime):
         if key_type != "number":
-            raise TypeError("Only Number")
+            raise Exception("Only Number")
 
         self.crypto = crypto
         self.key_type = key_type
         self.skip_data = skip_data
         self.keys = keys
+        self.initTime = initTime
 
-    async def get_geo(self, message: str) -> list:
+    def get_geo(self, message):
         geos = []
         for val in list(message):
             if val.isnumeric():
                 geos.append(self.keys[self.skip_data.index(val)])
             else:
-                raise TypeError("Only Number")
+                raise Exception("Only Number")
         return geos
 
-    async def geos_encrypt(self, geos: list) -> str:
+    def geos_encrypt(self, geos):
+        iv = bytes(
+            [
+                0x4D,
+                0x6F,
+                0x62,
+                0x69,
+                0x6C,
+                0x65,
+                0x54,
+                0x72,
+                0x61,
+                0x6E,
+                0x73,
+                0x4B,
+                0x65,
+                0x79,
+                0x31,
+                0x30,
+            ]
+        )
         out = ""
+
         for geo in geos:
             x, y = geo
 
-            x_bytes = bytes(map(int, list(x)))
-            y_bytes = bytes(map(int, list(y)))
-            rand_num = randint(0, 100)
+            xbytes = bytes(map(int, list(x)))
+            ybytes = bytes(map(int, list(y)))
 
-            data = b"%b %b e%c" % (x_bytes, y_bytes, rand_num)
-
-            iv = bytes(
-                [
-                    0x4D,
-                    0x6F,
-                    0x62,
-                    0x69,
-                    0x6C,
-                    0x65,
-                    0x54,
-                    0x72,
-                    0x61,
-                    0x6E,
-                    0x73,
-                    0x4B,
-                    0x65,
-                    0x79,
-                    0x31,
-                    0x30,
-                ]
-            )
-
+            data = b"%b %b %b %%b" % (xbytes, ybytes, self._time_to_bytes())
+            data += self._randomBytes(48 - len(data))
             out += "$" + self.crypto.seed_encrypt(iv, data).hex(",")
         return out
 
-    async def encrypt_password(self, pw: str) -> str:
-        geos = await self.get_geo(pw)
-        return await self.geos_encrypt(geos)
+    def encrypt_password(self, pw):
+        geos = self.get_geo(pw)
+        return self.geos_encrypt(geos)
+
+    def _randomBytes(self, length):
+        out = []
+        for _ in range(length):
+            out.append(randint(0, 100))
+        return bytes(out)
+
+    def _time_to_bytes(self):
+        out = []
+        for char in self.initTime:
+            if char.isalpha():
+                out.append(ord(char))
+            else:
+                out.append(int(char))
+        return bytes(out)

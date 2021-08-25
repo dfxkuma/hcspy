@@ -1,7 +1,6 @@
 import struct
-from typing import Any
 
-SS0: list = [
+SS0 = [
     696885672,
     92635524,
     382128852,
@@ -260,7 +259,7 @@ SS0: list = [
     445289112,
 ]
 
-SS1: list = [
+SS1 = [
     943196208,
     3894986976,
     741149985,
@@ -519,7 +518,7 @@ SS1: list = [
     3023538099,
 ]
 
-SS2: list = [
+SS2 = [
     2712152457,
     2172913029,
     3537114822,
@@ -778,7 +777,7 @@ SS2: list = [
     2459441802,
 ]
 
-SS3: list = [
+SS3 = [
     137377848,
     3370182696,
     220277805,
@@ -1040,44 +1039,42 @@ SS3: list = [
 L_ENDIAN = 0
 
 
-async def get_dword(buf: str, off: bytes) -> int:
+def GetDword(buf, off):
     return struct.unpack(">L", buf[off : off + 4])[0]
 
 
-async def get_b0(a: int) -> int:
-    return a & 255
+def GetB0(A):
+    return A & 255
 
 
-async def get_b1(a: int) -> int:
-    return a >> 8 & 255
+def GetB1(A):
+    return A >> 8 & 255
 
 
-async def get_b2(a: int) -> int:
-    return a >> 16 & 255
+def GetB2(A):
+    return A >> 16 & 255
 
 
-async def get_b3(a: int) -> int:
-    return a >> 24 & 255
+def GetB3(A):
+    return A >> 24 & 255
 
 
-async def rol(data: int, shift: int, size: int = 32) -> int:
+def ROL(data, shift, size=32):
     shift %= size
     remains = data >> size - shift
     body = (data << shift) - (remains << size)
     return body + remains
 
 
-async def ror(data: int, shift: int, size=32) -> int:
+def ROR(data, shift, size=32):
     shift %= size
     body = data >> shift
     remains = (data << size - shift) - (body << size)
     return body + remains
 
 
-async def endian_change(data: int) -> int:
-    rol1 = await rol(data, 8, 32) & 16711935
-    rol2 = await rol(data, 24, 32) & 4278255360
-    return rol1 | rol2
+def endianchange(data):
+    return ROL(data, 8, 32) & 16711935 | ROL(data, 24, 32) & 4278255360
 
 
 class SEED:
@@ -1099,187 +1096,138 @@ class SEED:
         self.KC14 = 3731777421
         self.KC15 = 3168587547
 
-    async def seed_encrypt(self, src: int, round_key: str) -> bytes:
+    def SeedEncrypt(self, Src, RoundKey):
         L0 = []
         L1 = []
         R0 = []
         R1 = []
         if L_ENDIAN == 1:
-            L0.append(await endian_change(await get_dword(src, 0)))
-            L1.append(await endian_change(await get_dword(src, 4)))
-            R0.append(await endian_change(await get_dword(src, 8)))
-            R1.append(await endian_change(await get_dword(src, 12)))
+            L0.append(endianchange(GetDword(Src, 0)))
+            L1.append(endianchange(GetDword(Src, 4)))
+            R0.append(endianchange(GetDword(Src, 8)))
+            R1.append(endianchange(GetDword(Src, 12)))
         else:
-            L0.append(await get_dword(src, 0))
-            L1.append(await get_dword(src, 4))
-            R0.append(await get_dword(src, 8))
-            R1.append(await get_dword(src, 12))
-        K = round_key
-        await self.seed_round(L0, L1, R0, R1, K, 0)
-        await self.seed_round(R0, R1, L0, L1, K, 2)
-        await self.seed_round(L0, L1, R0, R1, K, 4)
-        await self.seed_round(R0, R1, L0, L1, K, 6)
-        await self.seed_round(L0, L1, R0, R1, K, 8)
-        await self.seed_round(R0, R1, L0, L1, K, 10)
-        await self.seed_round(L0, L1, R0, R1, K, 12)
-        await self.seed_round(R0, R1, L0, L1, K, 14)
-        await self.seed_round(L0, L1, R0, R1, K, 16)
-        await self.seed_round(R0, R1, L0, L1, K, 18)
-        await self.seed_round(L0, L1, R0, R1, K, 20)
-        await self.seed_round(R0, R1, L0, L1, K, 22)
-        await self.seed_round(L0, L1, R0, R1, K, 24)
-        await self.seed_round(R0, R1, L0, L1, K, 26)
-        await self.seed_round(L0, L1, R0, R1, K, 28)
-        await self.seed_round(R0, R1, L0, L1, K, 30)
+            L0.append(GetDword(Src, 0))
+            L1.append(GetDword(Src, 4))
+            R0.append(GetDword(Src, 8))
+            R1.append(GetDword(Src, 12))
+        K = RoundKey
+        self.__SeedRound__(L0, L1, R0, R1, K, 0)
+        self.__SeedRound__(R0, R1, L0, L1, K, 2)
+        self.__SeedRound__(L0, L1, R0, R1, K, 4)
+        self.__SeedRound__(R0, R1, L0, L1, K, 6)
+        self.__SeedRound__(L0, L1, R0, R1, K, 8)
+        self.__SeedRound__(R0, R1, L0, L1, K, 10)
+        self.__SeedRound__(L0, L1, R0, R1, K, 12)
+        self.__SeedRound__(R0, R1, L0, L1, K, 14)
+        self.__SeedRound__(L0, L1, R0, R1, K, 16)
+        self.__SeedRound__(R0, R1, L0, L1, K, 18)
+        self.__SeedRound__(L0, L1, R0, R1, K, 20)
+        self.__SeedRound__(R0, R1, L0, L1, K, 22)
+        self.__SeedRound__(L0, L1, R0, R1, K, 24)
+        self.__SeedRound__(R0, R1, L0, L1, K, 26)
+        self.__SeedRound__(L0, L1, R0, R1, K, 28)
+        self.__SeedRound__(R0, R1, L0, L1, K, 30)
         if L_ENDIAN == 1:
             return struct.pack(
                 ">LLLL",
-                await endian_change(R0[0]),
-                await endian_change(R1[0]),
-                await endian_change(L0[0]),
-                await endian_change(L1[0]),
+                endianchange(R0[0]),
+                endianchange(R1[0]),
+                endianchange(L0[0]),
+                endianchange(L1[0]),
             )
         else:
             return struct.pack(">LLLL", R0[0], R1[0], L0[0], L1[0])
 
-    @staticmethod
-    async def seed_round(
-        self, L0: list, L1: list, R0: list, R1: list, K: list, off: int
-    ) -> None:
+    def __SeedRound__(self, L0, L1, R0, R1, K, off):
         T0 = R0[0] ^ K[off + 0]
         T1 = R1[0] ^ K[off + 1]
         T1 ^= T0
-        T1 = (
-            SS0[await get_b0(T1)]
-            ^ SS1[await get_b1(T1)]
-            ^ SS2[await get_b2(T1)]
-            ^ SS3[await get_b3(T1)]
-        )
+        T1 = SS0[GetB0(T1)] ^ SS1[GetB1(T1)] ^ SS2[GetB2(T1)] ^ SS3[GetB3(T1)]
         T0 += T1
         T0 &= 4294967295
-        T0 = (
-            SS0[await get_b0(T0)]
-            ^ SS1[await get_b1(T0)]
-            ^ SS2[await get_b2(T0)]
-            ^ SS3[await get_b3(T0)]
-        )
+        T0 = SS0[GetB0(T0)] ^ SS1[GetB1(T0)] ^ SS2[GetB2(T0)] ^ SS3[GetB3(T0)]
         T1 += T0
         T1 &= 4294967295
-        T1 = (
-            SS0[await get_b0(T1)]
-            ^ SS1[await get_b1(T1)]
-            ^ SS2[await get_b2(T1)]
-            ^ SS3[await get_b3(T1)]
-        )
+        T1 = SS0[GetB0(T1)] ^ SS1[GetB1(T1)] ^ SS2[GetB2(T1)] ^ SS3[GetB3(T1)]
         T0 += T1
         T0 &= 4294967295
         L0[0] ^= T0
         L1[0] ^= T1
 
-    async def seed_round_key(self, user_key) -> Any:
-        if len(user_key) < 16:
-            user_key += "\x00" * (16 - len(user_key))
+    def SeedRoundKey(self, UserKey):
+        if len(UserKey) < 16:
+            UserKey += "\x00" * (16 - len(UserKey))
         A = []
         B = []
         C = []
         D = []
         if L_ENDIAN == 1:
-            A.append(await endian_change(await get_dword(user_key, 0)))
-            B.append(await endian_change(await get_dword(user_key, 4)))
-            C.append(await endian_change(await get_dword(user_key, 8)))
-            D.append(await endian_change(await get_dword(user_key, 12)))
+            A.append(endianchange(GetDword(UserKey, 0)))
+            B.append(endianchange(GetDword(UserKey, 4)))
+            C.append(endianchange(GetDword(UserKey, 8)))
+            D.append(endianchange(GetDword(UserKey, 12)))
         else:
-            A.append(await get_dword(user_key, 0))
-            B.append(await get_dword(user_key, 4))
-            C.append(await get_dword(user_key, 8))
-            D.append(await get_dword(user_key, 12))
+            A.append(GetDword(UserKey, 0))
+            B.append(GetDword(UserKey, 4))
+            C.append(GetDword(UserKey, 8))
+            D.append(GetDword(UserKey, 12))
         RoundKey = []
         for i in range(32):
             RoundKey.append(0)
 
         K = RoundKey
-        await self.round_key_update0(K, 0, A, B, C, D, self.KC0)
-        await self.round_key_update1(K, 2, A, B, C, D, self.KC1)
-        await self.round_key_update0(K, 4, A, B, C, D, self.KC2)
-        await self.round_key_update1(K, 6, A, B, C, D, self.KC3)
-        await self.round_key_update0(K, 8, A, B, C, D, self.KC4)
-        await self.round_key_update1(K, 10, A, B, C, D, self.KC5)
-        await self.round_key_update0(K, 12, A, B, C, D, self.KC6)
-        await self.round_key_update1(K, 14, A, B, C, D, self.KC7)
-        await self.round_key_update0(K, 16, A, B, C, D, self.KC8)
-        await self.round_key_update1(K, 18, A, B, C, D, self.KC9)
-        await self.round_key_update0(K, 20, A, B, C, D, self.KC10)
-        await self.round_key_update1(K, 22, A, B, C, D, self.KC11)
-        await self.round_key_update0(K, 24, A, B, C, D, self.KC12)
-        await self.round_key_update1(K, 26, A, B, C, D, self.KC13)
-        await self.round_key_update0(K, 28, A, B, C, D, self.KC14)
+        self.__RoundKeyUpdate0__(K, 0, A, B, C, D, self.KC0)
+        self.__RoundKeyUpdate1__(K, 2, A, B, C, D, self.KC1)
+        self.__RoundKeyUpdate0__(K, 4, A, B, C, D, self.KC2)
+        self.__RoundKeyUpdate1__(K, 6, A, B, C, D, self.KC3)
+        self.__RoundKeyUpdate0__(K, 8, A, B, C, D, self.KC4)
+        self.__RoundKeyUpdate1__(K, 10, A, B, C, D, self.KC5)
+        self.__RoundKeyUpdate0__(K, 12, A, B, C, D, self.KC6)
+        self.__RoundKeyUpdate1__(K, 14, A, B, C, D, self.KC7)
+        self.__RoundKeyUpdate0__(K, 16, A, B, C, D, self.KC8)
+        self.__RoundKeyUpdate1__(K, 18, A, B, C, D, self.KC9)
+        self.__RoundKeyUpdate0__(K, 20, A, B, C, D, self.KC10)
+        self.__RoundKeyUpdate1__(K, 22, A, B, C, D, self.KC11)
+        self.__RoundKeyUpdate0__(K, 24, A, B, C, D, self.KC12)
+        self.__RoundKeyUpdate1__(K, 26, A, B, C, D, self.KC13)
+        self.__RoundKeyUpdate0__(K, 28, A, B, C, D, self.KC14)
         T0 = A[0] + C[0] - self.KC15
         T1 = B[0] - D[0] + self.KC15
-        K[30] = (
-            SS0[await get_b0(T0)]
-            ^ SS1[await get_b1(T0)]
-            ^ SS2[await get_b2(T0)]
-            ^ SS3[await get_b3(T0)]
-        )
-        K[31] = (
-            SS0[await get_b0(T1)]
-            ^ SS1[await get_b1(T1)]
-            ^ SS2[await get_b2(T1)]
-            ^ SS3[await get_b3(T1)]
-        )
+        K[30] = SS0[GetB0(T0)] ^ SS1[GetB1(T0)] ^ SS2[GetB2(T0)] ^ SS3[GetB3(T0)]
+        K[31] = SS0[GetB0(T1)] ^ SS1[GetB1(T1)] ^ SS2[GetB2(T1)] ^ SS3[GetB3(T1)]
         for i in range(32):
             RoundKey[i] &= 4294967295
 
         return RoundKey
 
-    @staticmethod
-    async def round_key_update0(
-        self, K: list, off: int, A: list, B: list, C: list, D: list, KC: int
-    ) -> None:
+    def __RoundKeyUpdate0__(self, K, off, A, B, C, D, KC):
         T0 = A[0] + C[0] - KC & 4294967295
         T1 = B[0] + KC - D[0] & 4294967295
-        K[off + 0] = (
-            SS0[await get_b0(T0)]
-            ^ SS1[await get_b1(T0)]
-            ^ SS2[await get_b2(T0)]
-            ^ SS3[await get_b3(T0)]
-        )
-        K[off + 1] = (
-            SS0[await get_b0(T1)]
-            ^ SS1[await get_b1(T1)]
-            ^ SS2[await get_b2(T1)]
-            ^ SS3[await get_b3(T1)]
-        )
+        K[off + 0] = SS0[GetB0(T0)] ^ SS1[GetB1(T0)] ^ SS2[GetB2(T0)] ^ SS3[GetB3(T0)]
+        K[off + 1] = SS0[GetB0(T1)] ^ SS1[GetB1(T1)] ^ SS2[GetB2(T1)] ^ SS3[GetB3(T1)]
         T0 = A[0]
         A[0] = (A[0] >> 8 ^ (B[0] & 255) << 24) & 4294967295
         B[0] = (B[0] >> 8 ^ (T0 & 255) << 24) & 4294967295
 
-    @staticmethod
-    async def round_key_update1(
-        self, K: list, off: int, A: list, B: list, C: list, D: list, KC: int
-    ) -> None:
+    def __RoundKeyUpdate1__(self, K, off, A, B, C, D, KC):
         T0 = A[0] + C[0] - KC & 4294967295
         T1 = B[0] + KC - D[0] & 4294967295
-        K[off + 0] = (
-            SS0[await get_b0(T0)]
-            ^ SS1[await get_b1(T0)]
-            ^ SS2[await get_b2(T0)]
-            ^ SS3[await get_b3(T0)]
-        )
-        K[off + 1] = (
-            SS0[await get_b0(T1)]
-            ^ SS1[await get_b1(T1)]
-            ^ SS2[await get_b2(T1)]
-            ^ SS3[await get_b3(T1)]
-        )
+        K[off + 0] = SS0[GetB0(T0)] ^ SS1[GetB1(T0)] ^ SS2[GetB2(T0)] ^ SS3[GetB3(T0)]
+        K[off + 1] = SS0[GetB0(T1)] ^ SS1[GetB1(T1)] ^ SS2[GetB2(T1)] ^ SS3[GetB3(T1)]
         T0 = C[0]
         C[0] = (C[0] << 8 ^ D[0] >> 24) & 4294967295
         D[0] = (D[0] << 8 ^ T0 >> 24) & 4294967295
 
-    async def my_cbc_encrypt(self, in_data, k, iv) -> bytes:
-        xo_red = []
-        for i in range(0, 16):
-            xo_red.append(iv[i] ^ in_data[i])
+    def my_cbc_encrypt(self, inData, k, iv):
+        prev = iv
+        enced = b""
 
-        enc = await self.seed_encrypt(bytes(xo_red), k)
-        return enc
+        for i in range(0, len(inData), 16):
+            xored = []
+            for j in range(0, 16):
+                xored.append(prev[j] ^ inData[i + j])
+            enc = self.SeedEncrypt(bytes(xored), k)
+            enced += enc
+            prev = enc
+        return enced

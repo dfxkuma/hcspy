@@ -2,52 +2,51 @@ import re
 
 import aiohttp
 
-from .crypto import Crypto
+from . import crypto
 from .keypad import KeyPad
 
 
-class MTransKey:
-    def __init__(
-        self, servlet_url: str = "https://hcs.eduro.go.kr/transkeyServlet"
-    ) -> None:
+class mTransKey:
+    def __init__(self, servlet_url):
         self.servlet_url = servlet_url
-        self.crypto = Crypto()
+        self.crypto = crypto.Crypto()
         self.token = ""
         self.initTime = ""
+        self.decInitTime = ""
         self.qwerty = []
         self.number = []
+        self.keyIndex = ""
 
-    async def _get_data(
-        self, session: aiohttp.ClientSession = aiohttp.ClientSession()
-    ) -> None:
-        await self._get_token(session)
-        await self._get_init_time(session)
-        await self._get_public_key(session)
-        await self._get_key_info(session)
+    async def _get_data(self):
+        async with aiohttp.ClientSession() as session:
+            await self._get_token(session)
+            await self._get_init_time(session)
+            await self._get_public_key(session)
+            await self._get_key_info(session)
 
-    async def _get_token(self, session: aiohttp.ClientSession) -> None:
+    async def _get_token(self, session: aiohttp.ClientSession):
         async with session.get("{}?op=getToken".format(self.servlet_url)) as resp:
             txt = await resp.text()
             self.token = re.findall("var TK_requestToken=(.*);", txt)[0]
 
-    async def _get_init_time(self, session: aiohttp.ClientSession) -> None:
+    async def _get_init_time(self, session: aiohttp.ClientSession):
         async with session.get("{}?op=getInitTime".format(self.servlet_url)) as resp:
             txt = await resp.text()
             self.initTime = re.findall("var initTime='(.*)';", txt)[0]
 
-    async def _get_public_key(self, session: aiohttp.ClientSession) -> None:
+    async def _get_public_key(self, session: aiohttp.ClientSession):
         async with session.post(
             self.servlet_url, data={"op": "getPublicKey", "TK_requestToken": self.token}
         ) as resp:
             key = await resp.text()
-            await self.crypto.set_pub_key(key)
+            self.crypto.set_pub_key(key)
 
-    async def _get_key_info(self, session: aiohttp.ClientSession) -> None:
+    async def _get_key_info(self, session: aiohttp.ClientSession):
         async with session.post(
             self.servlet_url,
             data={
                 "op": "getKeyInfo",
-                "key": await self.crypto.get_encrypted_key(),
+                "key": self.crypto.get_encrypted_key(),
                 "transkeyUuid": self.crypto.uuid,
                 "useCert": "true",
                 "TK_requestToken": self.token,
@@ -71,42 +70,58 @@ class MTransKey:
             self.qwerty = qwerty_keys
             self.number = number_keys
 
-    async def new_keypad(
-        self,
-        key_type,
-        name,
-        inputName,
-        fieldType="password",
-        session: aiohttp.ClientSession = aiohttp.ClientSession(),
-    ) -> KeyPad:
-        await self._get_data(session=session)
-        async with session.post(
-            self.servlet_url,
-            data={
-                "op": "getDummy",
-                "name": name,
-                "keyType": "single",
-                "keyboardType": "number",
-                "fieldType": fieldType,
-                "inputName": inputName,
-                "transkeyUuid": self.crypto.uuid,
-                "exE2E": "false",
-                "isCrt": "false",
-                "allocationIndex": "3011907012",
-                "keyIndex": self.crypto.rsa_encrypt(b"32"),
-                "initTime": self.initTime,
-                "TK_requestToken": self.token,
-                "dummy": "undefined",
-                "talkBack": "true",
-            },
-        ) as resp:
-            skip_data = await resp.text()
-            skip = skip_data.split(",")
+    async def new_keypad(self, key_type, name, inputName, fieldType="password"):
+        await self._get_data()
+        async with aiohttp.ClientSession() as session:
+            key_index_res = await session.post(
+                self.servlet_url,
+                data={
+                    "op": "getKeyIndex",
+                    "name": "password",
+                    "keyType": "single",
+                    "keyboardType": "number",
+                    "fieldType": "password",
+                    "inputName": "password",
+                    "parentKeyboard": "false",
+                    "transkeyUuid": self.crypto.uuid,
+                    "exE2E": "false",
+                    "TK_requestToken": self.token,
+                    "isCrt": "false",
+                    "allocationIndex": "3011907012",
+                    "keyIndex": "",
+                    "initTime": self.initTime,
+                    "talkBack": "true",
+                },
+            )
+            self.keyIndex = await key_index_res.text()
 
-            return KeyPad(self.crypto, key_type, skip, self.number)
+            async with session.post(
+                self.servlet_url,
+                data={
+                    "op": "getDummy",
+                    "name": name,
+                    "keyType": "single",
+                    "keyboardType": "number",
+                    "fieldType": fieldType,
+                    "inputName": inputName,
+                    "transkeyUuid": self.crypto.uuid,
+                    "exE2E": "false",
+                    "isCrt": "false",
+                    "allocationIndex": "3011907012",
+                    "keyIndex": self.keyIndex,
+                    "initTime": self.initTime,
+                    "TK_requestToken": self.token,
+                    "dummy": "undefined",
+                    "talkBack": "true",
+                },
+            ) as resp:
+                skip_data = await resp.text()
+                skip = skip_data.split(",")
 
-    async def hmac_digest(self, message):
-        return await self.crypto.hmac_digest(message)
+                return KeyPad(self.crypto, key_type, skip, self.number, self.initTime)
 
-    async def get_uuid(self):
+    def hmac_digest(self, message):
+        return self.crypto.hmac_digest(message)
+
+    def get_uuid(self):
         return self.crypto.uuid
