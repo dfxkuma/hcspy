@@ -21,7 +21,7 @@ pip install hcspy
 
 이 라이브러리는 비동기만 지원합니다.
 
-[문서로 이동하기](https://github.com/decave27/hcspy)
+[문서로 이동하기](https://hcspy.readthedocs.io)
 
 [예제코드 보기](https://github.com/decave27/hcspy/blob/main/example/example.md)
 
