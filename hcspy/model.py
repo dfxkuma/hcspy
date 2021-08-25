@@ -28,5 +28,8 @@ class Hospital:
     name: str
     state: str
     city: str
-    schedule: str
+    schedule_weekday: str
+    schedule_saturday: str
+    schedule_sunday: str
     tell: str
+    map_url: str

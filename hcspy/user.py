@@ -162,8 +162,11 @@ class User:
                 name=hospital["hsptNm"],
                 state=hospital["sido"],
                 city=hospital["sigNm"],
-                schedule=hospital["weekdayBizHour"],
+                schedule_weekday=hospital["weekdayBizHour"],
+                schedule_saturday=hospital["satBizHour"],
+                schedule_sunday=hospital["sunBizHour"],
                 tell=hospital["ofcTelNo"],
+                map_url=f'https://www.mohw.go.kr/react/ncov_map_page.jsp?region={hospital["sido"]}&town={hospital["sigNm"]}&hospitalNm={hospital["hsptNm"]}',
             )
             for hospital in response
         ]
