@@ -50,6 +50,13 @@ pip install hcspy
 - client에 session을 입력하면 기존 세션을 사용하여 요청할 수 있어요!
 - <User>.check 에 log_name 파라미터로 수행자 이름을 커스텀 할 수 있어요!
 
+## 😆 기여 및 참고
+
+⭐ [331leo/hcskr_python](https://github.com/331leo/hcskr_python)
+
+⭐ [covid-hcs/transkey-py](https://github.com/covid-hcs/transkey-py)
+
+
 
 
 
