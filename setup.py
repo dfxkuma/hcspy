@@ -6,7 +6,7 @@ import re
 from setuptools import find_packages, setup
 
 version = ""
-with open("funfetch/__init__.py", encoding="UTF8") as f:
+with open("hcspy/__init__.py", encoding="UTF8") as f:
     version = re.search(
         r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE
     ).group(1)
@@ -30,7 +30,7 @@ setup(
     url="https://github.com/decave27/hcspy",
     project_urls={
         "Source": "https://github.com/decave27/hcspy",
-        "Tracker": "https://github.com/decave27/funfetch/hcspy",
+        "Tracker": "https://github.com/decave27/hcspy/issues",
     },
     version=version,
     packages=find_packages(),
