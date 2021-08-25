@@ -1,8 +1,6 @@
-from .http import HTTPClient
 from typing import Optional, Any, List
 from .errors import AlreadyAgreed
-from .model import Board
-from asyncio import get_event_loop
+from .model import Board, Hospital
 
 
 class User:
@@ -18,7 +16,7 @@ class User:
         self.uid = None
         self.school = None
         self.password = None
-        self._http = HTTPClient()
+        self._http = None
 
     def __repr__(self) -> str:
         return f"<User name={self.name} uid={self.uid} school={self.school.name}>"
@@ -35,18 +33,41 @@ class User:
         self.uid = group_data.get("userPNo")
         self.school = kwargs.get("school")
         self.password = kwargs.get("password")
+        self._http = kwargs.get("http_session")
         return self
 
     async def check(self, log_name: Optional[str] = None) -> None:
+        """자가진단을 모두 증상 없음으로 체크합니다.
+
+        Parameters
+        ----------
+        log_name: Optional[str]
+            자가진단 로그 이름을 지정합니다.
+        """
         if not log_name:
             log_name = self.name
+        data = await self._http.get_user(
+            endpoint=self.school.endpoint,
+            code=self.school.id,
+            user_id=self.uid,
+            token=self._token,
+        )
         await self._http.check_survey(
-            endpoint=self.school.endpoint, token=self._token, log_name=log_name
+            endpoint=self.school.endpoint, token=data.get("token"), log_name=log_name
         )
 
     async def change_password(
         self, password: Optional[str] = None, new_password: str = None
     ) -> None:
+        """자가진단 비밀번호를 변경합니다
+
+        Parameters
+        ----------
+        password: Optional[str]
+            기존 비밀번호 4자리를 입력합니다. 입력값이 없을 경우 자동으로 비밀번호를 가져옵니다.
+        new_password: str
+            새로운 비밀번호 4자리를 입력합니다.
+        """
         if not new_password:
             raise KeyError("새로운 비밀번호를 지정하세요")
         if not password:
@@ -60,6 +81,9 @@ class User:
         self.password = new_password
 
     async def update_agreement(self) -> None:
+        """
+        자가진단 이용약관에 동의합니다.
+        """
         if not self.agreement_required:
             raise AlreadyAgreed("이미 약관에 동의했습니다.")
         await self._http.update_agreement(
@@ -67,6 +91,14 @@ class User:
         )
 
     async def get_notice(self, page: int = 0) -> List[Board]:
+        """자가진단 공지사항을 가져옵니다.
+
+        Parameters
+        ----------
+        page: int
+            페이지를 지정합니다. 기본값은 0입니다.
+
+        """
         response = await self._http.get_notice_list(
             endpoint=self.school.endpoint, token=self._token, page=page
         )
@@ -88,13 +120,37 @@ class User:
             for board in response
         ]
 
+    async def search_hospital(
+        self, location: str = None, name: str = None
+    ) -> Optional[List[Hospital]]:
+        """
+        보건소나 병원을 검색합니다.
+
+        Parameters
+        ----------
+        location: Optional[str]
+            보건소나 병원 지역을 지정합니다.
+        name: Optional[str]
+            보간소나 병원 이름 또는 키워드를 지정합니다.
+        """
+        response = await self._http.search_hospital(
+            endpoint=self.school.endpoint,
+            token=self._token,
+            location=location,
+            name=name,
+        )
+        return [
+            Hospital(
+                name=hospital["hsptNm"],
+                state=hospital["sido"],
+                city=hospital["sigNm"],
+                schedule=hospital["weekdayBizHour"],
+                tell=hospital["ofcTelNo"],
+            )
+            for hospital in response
+        ]
+
     async def close(self) -> None:
+        """자가진단에서 로그아웃합니다."""
         await self._http.logout(endpoint=self.school.endpoint, token=self._token)
         await self._http.close()
-
-    def __del__(self) -> None:
-        _loop = get_event_loop()
-        if _loop.is_running():
-            _loop.create_task(self._http.close())
-        else:
-            _loop.run_until_complete(self._http.close())
