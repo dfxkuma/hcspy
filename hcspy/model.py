@@ -21,3 +21,12 @@ class Board:
     group_name: str
     author: str
     content: str
+
+
+@dataclasses.dataclass(repr=True)
+class Hospital:
+    name: str
+    state: str
+    city: str
+    schedule: str
+    tell: str

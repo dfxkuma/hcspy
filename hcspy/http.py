@@ -2,17 +2,18 @@ import aiohttp
 from typing import ClassVar, Any, Optional, Literal, Dict
 from urllib.parse import quote as _uriquote
 from json import dumps
-from asyncio import get_event_loop
 
 from .errors import HTTPException, SchoolNotFound, AuthorizeError, PasswordLengthError
-from .utils import encrypt_login
-from .transkey import MTransKey
+from .utils import encrypt_login, multi_finder, url_create_with
+from .transkey import mTransKey
+from .data import school_areas, school_levels
 
 
 async def content_type(response):
-    if response.headers.get("Content-Type") == "application/json; charset=utf-8":
+    try:
         return await response.json()
-    return await response.text()
+    except Exception:
+        return await response.text()
 
 
 class Route:
@@ -40,6 +41,7 @@ class Route:
     @endpoint.setter
     def endpoint(self, value) -> None:
         self.BASE = value
+        self.url = self.BASE + self.path
 
 
 class HTTPRequest:
@@ -47,11 +49,25 @@ class HTTPRequest:
         self,
         session: Optional[aiohttp.ClientSession] = None,
     ):
+        """새 http 세션을 생성합니다.
+
+        Parameters
+        ----------
+        session: Optional[aiohttp.ClientSession]
+            기존 세션을 생성합니다.세션이 없을 경우 요청할 때 새로 생성합니다.
+        """
         self.__session = session
         self._cookie_jar = aiohttp.CookieJar()
 
     @staticmethod
-    def set_header(self, header: Dict[str, str]) -> Dict[str, str]:
+    def set_header(header: Dict[str, str]) -> Dict[str, str]:
+        """자가진단 사이트에 필요한 기본 헤더를 생성합니다.
+
+        Parameters
+        ----------
+        header: Dict[str, str]
+            기존 해더 dict 객체를 입력합니다.
+        """
         header["Accept"] = "application/json, text/plain, */*"
         header["Accept-Encoding"] = "gzip, deflate, br"
         header[
@@ -69,8 +85,18 @@ class HTTPRequest:
             "User-Agent"
         ] = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1"
         header["X-Requested-With"] = "XMLHttpRequest"
+        return header
 
     async def request(self, route: Route, **kwargs: Any) -> Any:
+        """
+        새 http 요청을 실행합니다.
+
+        Parameters
+        ----------
+        route: Route
+            url을 입력합니다.
+
+        """
         method = route.method
         url = route.url
         headers = kwargs.get("headers", None)
@@ -82,48 +108,74 @@ class HTTPRequest:
         headers = self.set_header(headers)
 
         if "json" in kwargs:
-            ContentType: str = "x-www-form-urlencoded" if method == "GET" else "json"
+            ContentType = "x-www-form-urlencoded" if method == "GET" else "json"
             headers["Content-Type"] = f"application/{ContentType};charset=UTF-8"
         if self._cookie_jar:
             kwargs["cookie_jar"] = self._cookie_jar
 
         async with self.__session.request(method, url, **kwargs) as response:
             data = await content_type(response)
-
         if response.status != 200:
-            raise HTTPException(response.stats, data)
+            raise HTTPException(response.status, data)
 
         return data
-
-    def __del__(self) -> None:
-        if self.__session:
-            if not self.session.closed:
-                _loop = get_event_loop()
-                if _loop.is_running():
-                    _loop.create_task(self.session.close())
-                else:
-                    _loop.run_until_complete(self.session.close())
 
 
 class HTTPClient:
     def __init__(
         self, session: aiohttp.ClientSession = aiohttp.ClientSession()
     ) -> None:
+        """새 http client를 세션과 함께 생성합니다"""
         self._session = session
         self._http = HTTPRequest(session=self._session)
 
-    async def search_school(self, name: str) -> Any:
-        response = await self._http.request(
-            Route("/searchSchool"), "GET", json={"orgName": name}
+    async def search_school(
+        self, name: str, level: Optional[str] = None, area: Optional[str] = None
+    ) -> Any:
+        """학교를 검색합니다
+
+        Parameters
+         ----------
+        name: str
+            검색할 학교 이름이나 키워드를 입력합니다
+        level: Optional[str]
+            학교 유형을 선택합니다.
+        area: Optional[str]
+            학교 지역을 선택합니다.
+        """
+        _level = multi_finder(data=school_levels, keyword=level, prefix="level")
+        _area = multi_finder(data=school_areas, keyword=area, prefix="area")
+        _route = url_create_with(
+            "/searchSchool",
+            orgName=name,
+            lctnScCode=_area,
+            schulCrseScCod=_level,
+            loginType="school",
         )
-        if len(response["schulList"]) >= 0:
+        response = await self._http.request(Route("GET", _route, name=name))
+        if len(response["schulList"]) < 0:
             raise SchoolNotFound(f"{name} 학교를 찾지 못했습니다.")
         return response["schulList"]
 
     async def get_token(
         self, endpoint: str, code: str, name: str, birthday: str
     ) -> Any:
-        route = Route("POST", "/findUser").endpoint = endpoint
+        """
+        api를 사용하기 위한 토큰을 발급합니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        code: str
+            학교 코드를 입력합니다.
+        name: str
+            사용자 이름을 입력합니다.
+        birthday: str
+            본인의 생년월일 8자리를 입력합니다.
+        """
+        route = Route("POST", "/v2/findUser")
+        route.endpoint = endpoint
         try:
             response = await self._http.request(
                 route,
@@ -141,45 +193,76 @@ class HTTPClient:
                 raise AuthorizeError("입력한 정보가 일치하지 않습니다.")
 
     async def update_agreement(self, endpoint: str, token: str) -> Any:
-        route = Route("POST", "/updatePInfAgrmYn").endpoint = endpoint
+        """
+        자가진단 이용약관에 동의합니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        """
+        route = Route("POST", "/v2/updatePInfAgrmYn")
+        route.endpoint = endpoint
         response = await self._http.request(route, headers={"Authorization": token})
         return response
 
     async def password_exist(self, endpoint: str, token: str) -> Any:
-        route = Route("POST", "/hasPassword").endpoint = endpoint
+        """
+        비밀번호를 설정했는지 확인합니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        """
+        route = Route("POST", "/v2/hasPassword")
+        route.endpoint = endpoint
         response = await self._http.request(route, headers={"Authorization": token})
         return bool(response)
 
     async def register_password(self, endpoint: str, token: str, password: str) -> Any:
+        """
+        비밀번호를 설정했는지 확인합니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        password: str
+            설정할 비밀번호 4자리를 입력합니다.
+        """
         if len(password) != 4:
             raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
         data = {"deviceUuid": "", "password": encrypt_login(password)}
-        route = Route("POST", "/registerPassword").endpoint = endpoint
+        route = Route("POST", "/v2/registerPassword")
+        route.endpoint = endpoint
         response = await self._http.request(
             route, json=data, headers={"Authorization": token}
         )
-        return response
-
-    async def login(self, endpoint: str, token: str, password: str) -> Any:
-        if len(password) != 4:
-            raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
-        route = Route("POST", "/validatePassword").endpoint = endpoint
-        data = {
-            "deviceUuid": "",
-            "password": encrypt_login(password),
-            "makeSession": True,
-        }
-        response = await self._http.request(
-            route, json=data, headers={"Authorization": token}
-        )
-        if isinstance(response, dict) and response["isError"]:
-            raise AuthorizeError("입력한 정보가 일치하지 않습니다.")
         return response
 
     async def check_survey(
         self, endpoint: str, token: str, log_name: Optional[str] = None
     ) -> Any:
-        route = Route("POST", "/registerServey").endpoint = endpoint
+        """자가진단을 모두 증상 없음으로 체크합니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        log_name: Optional[str]
+            자가진단 로그 이름을 지정합니다.
+        """
+        route = Route("POST", "/registerServey")
+        route.endpoint = endpoint
         data = {
             "rspns01": "1",
             "rspns02": "1",
@@ -201,6 +284,7 @@ class HTTPClient:
             "upperToken": token,
             "upperUserNameEncpt": log_name,
         }
+        print(data)
         response = await self._http.request(
             route, json=data, headers={"Authorization": token}
         )
@@ -208,10 +292,24 @@ class HTTPClient:
 
     async def change_password(
         self, endpoint: str, token: str, password: str, new_password: str
-    ) -> Any:
+    ) -> None:
+        """자가진단 비밀번호를 변경합니다
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        password: str
+            기존 비밀번호 4자리를 입력합니다. 입력값이 없을 경우 자동으로 비밀번호를 가져옵니다.
+        new_password: str
+            새로운 비밀번호 4자리를 입력합니다.
+        """
         if len(password) != 4 or len(new_password) != 4:
             raise PasswordLengthError("비밀번호는 숫자 4자리만 허용됩니다.")
-        route = Route("POST", "/changePassword").endpoint = endpoint
+        route = Route("POST", "/v2/changePassword")
+        route.endpoint = endpoint
         data = {
             "password": encrypt_login(password),
             "newPassword": encrypt_login(new_password),
@@ -221,14 +319,24 @@ class HTTPClient:
         )
         return response
 
-    async def transkey(self, endpoint: str, token: str, password: str) -> Any:
-        mtk = MTransKey()
-        keypad = await mtk.new_keypad(
-            "number", "password", "password", "password", session=self.__session
-        )
-        encrypted = await keypad.encrypt_password(password)
-        hm = await mtk.hmac_digest(encrypted.encode())
-        route = Route("POST", "/validatePassword").endpoint = endpoint
+    async def login(self, endpoint: str, token: str, password: str) -> Any:
+        """보안 키보드를 이용해 로그인합니다
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        password: str
+            사용자 비밀번호 4자리를 입력합니다.
+        """
+        mtk = mTransKey("https://hcs.eduro.go.kr/transkeyServlet")
+        keypad = await mtk.new_keypad("number", "password", "password", "password")
+        encrypted = keypad.encrypt_password(password)
+        hm = mtk.hmac_digest(encrypted.encode())
+        route = Route("POST", "/v2/validatePassword")
+        route.endpoint = endpoint
         data = {
             "password": dumps(
                 {
@@ -238,7 +346,7 @@ class HTTPClient:
                             "enc": encrypted,
                             "hmac": hm,
                             "keyboardType": "number",
-                            "keyIndex": mtk.crypto.rsa_encrypt(b"32"),
+                            "keyIndex": mtk.keyIndex,
                             "fieldType": "password",
                             "seedKey": mtk.crypto.get_encrypted_key(),
                             "initTime": mtk.initTime,
@@ -256,14 +364,38 @@ class HTTPClient:
         return response
 
     async def get_group(self, endpoint: str, token: str) -> Any:
-        route = Route("POST", "/selectUserGroup").endpoint = endpoint
+        """해당 계정으로 등록된 유저들을 가져옵니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        """
+        route = Route("POST", "/v2/selectUserGroup")
+        route.endpoint = endpoint
         response = await self._http.request(
             route, json={}, headers={"Authorization": token}
         )
         return response
 
     async def get_user(self, endpoint: str, code: str, user_id: str, token: str) -> Any:
-        route = Route("POST", "/getUserinfo").endpoint = endpoint
+        """해당 계정에 등록된 유저 정보를 가져옵니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        code: str
+            학교 코드를 입력합니다.
+        user_id: str
+            유저 id를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        """
+        route = Route("POST", "/v2/getUserInfo")
+        route.endpoint = endpoint
         response = await self._http.request(
             route,
             json={"orgCode": code, "userPNo": user_id},
@@ -274,12 +406,29 @@ class HTTPClient:
     async def get_notice_list(
         self, endpoint: str, token: str, page: int = 0, count: int = 30
     ) -> Any:
+        """자가진단 공지사항을 가져옵니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        page: int
+            페이지를 입력합니다. 기본값은 0 입니다.
+        count: int
+           최대로 가져올 공지사항의 갯수를 설정합니다. 기본값은 30 입니다.
+        """
+        url = url_create_with(
+            "/v2/selectNoticeList",
+            currentPageNumber=page,
+            listCount=count,
+        )
         route = Route(
             "GET",
-            "/selectNoticeList?currentPageNumber={page}&listCount={count}",
-            page=page,
-            count=count,
-        ).endpoint = endpoint
+            url,
+        )
+        route.endpoint = endpoint
         response = await self._http.request(
             route,
             json={},
@@ -288,9 +437,23 @@ class HTTPClient:
         return response
 
     async def get_notice_content(self, endpoint: str, token: str, code: str) -> Any:
-        route = Route(
-            "GET", "/selectNotice?idxNtc={code}", code=code
-        ).endpoint = endpoint
+        """공지사항의 내용을 가져옵니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        code: str
+            공지사항의 글 id를 입력합니다.
+        """
+        url = url_create_with(
+            "/v2/selectNotice",
+            idxNtc=code,
+        )
+        route = Route("GET", url)
+        route.endpoint = endpoint
         response = await self._http.request(
             route,
             json={},
@@ -299,12 +462,57 @@ class HTTPClient:
         return response["contentsNtc"]
 
     async def logout(self, endpoint: str, token: str) -> Any:
-        route = Route("GET", "/logout").endpoint = endpoint
+        """
+        자가진단에서 로그아웃합니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        """
+        route = Route("GET", "/v2/logout")
+        route.endpoint = endpoint
         response = await self._http.request(
             route,
             json={},
             headers={"Authorization": token},
         )
 
+    async def search_hospital(
+        self, endpoint: str, token: str, location: str = None, name: str = None
+    ) -> Any:
+        """
+        보건소나 병원을 검색합니다.
+
+        Parameters
+        ----------
+        endpoint: str
+            학교 api 주소를 입력합니다.
+        token: str
+            사용자 토큰을 입력합니다.
+        location: Optional[str]
+            보건소나 병원 지역을 지정합니다.
+        name: Optional[str]
+            보간소나 병원 이름 또는 키워드를 지정합니다.
+        """
+        url = url_create_with(
+            "/v2/selectHospitals",
+            lctnScNm=location,
+            hsptNm=name,
+        )
+        route = Route(
+            "GET",
+            url,
+        )
+        route.endpoint = endpoint
+        response = await self._http.request(
+            route,
+            headers={"Authorization": token},
+        )
+        return response
+
     async def close(self) -> Any:
+        """http 세션을 닫습니다"""
         await self._http.session.close()
