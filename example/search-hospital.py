@@ -19,7 +19,7 @@ async def search_hospital():
     )  # 지역을 경기도, 키워드를 보건소로 설정하고 병원, 보건소 검색
     for hospital in hospital_list:  # 정보 출력
         print(
-            f"병원 | {hospital.name}, 주소: {hospital.state} {hospital.city} | 영업시간: {hospital.schedule} | 전화번호 {hospital.tell}\n\n"
+            f"병원 | {hospital.name}, 주소: {hospital.state} {hospital.city} | 영업시간: 평일 {hospital.schedule_weekday}, 토요일 {hospital.schedule_saturday}, 일요일 {hospital.schedule_sunday} | 전화번호 {hospital.tell}\n\n"
         )
 
 
