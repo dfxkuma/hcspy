@@ -6,7 +6,7 @@ from json import dumps
 from .errors import HTTPException, SchoolNotFound, AuthorizeError, PasswordLengthError
 from .utils import encrypt_login, multi_finder, url_create_with
 from .transkey import mTransKey
-from .data import school_areas, school_levels
+from .data import school_areas, school_levels, login_level
 
 
 async def content_type(response):
@@ -130,7 +130,11 @@ class HTTPClient:
         self._http = HTTPRequest(session=self._session)
 
     async def search_school(
-        self, name: str, level: Optional[str] = None, area: Optional[str] = None
+        self,
+        name: str,
+        level: Optional[str] = None,
+        area: Optional[str] = None,
+        school_type: str = "school",
     ) -> Any:
         """학교를 검색합니다
 
@@ -142,15 +146,18 @@ class HTTPClient:
             학교 유형을 선택합니다.
         area: Optional[str]
             학교 지역을 선택합니다.
+        school_type: str
+            기관 타입을 선택합니다.
         """
         _level = multi_finder(data=school_levels, keyword=level, prefix="level")
         _area = multi_finder(data=school_areas, keyword=area, prefix="area")
+        _school_type = multi_finder(data=login_level, keyword=school_type, prefix="")
         _route = url_create_with(
             "/searchSchool",
             orgName=name,
             lctnScCode=_area,
             schulCrseScCod=_level,
-            loginType="school",
+            loginType=_school_type,
         )
         response = await self._http.request(Route("GET", _route, name=name))
         if len(response["schulList"]) < 0:

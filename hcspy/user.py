@@ -16,6 +16,7 @@ class User:
         self.uid = None
         self.school = None
         self.password = None
+        self.wrong_password_count = None
         self._http = None
 
     def __repr__(self) -> str:
@@ -33,6 +34,10 @@ class User:
         self.uid = group_data.get("userPNo")
         self.school = kwargs.get("school")
         self.password = kwargs.get("password")
+        self.wrong_password_count = login_data.get("wrongPassCnt", 0)
+        self.new_notice_count = login_data.get("newNoticeCount", 0)
+        self.survey_count = login_data.get("extSurveyCount", 0)
+        self.is_healthy = login_data.get("isHealthy", 0)
         self._http = kwargs.get("http_session")
         return self
 
