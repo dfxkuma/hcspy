@@ -42,6 +42,8 @@ pip install hcspy
 - 참여자 추가
 - 코로나19 시도정보
 - 추가설문
+- 대학 자가진단 
+- 교육행정기관 자가진단
 
 ## 💡 TIP
 - <HCSClient>.fast_login 으로 빠르게 로그인할 수 있어요!
