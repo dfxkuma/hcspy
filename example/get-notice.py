@@ -14,8 +14,8 @@ async def get_notice():
         password="4자리 비밀번호",
     )
     user1 = user[-1]  # 첫번째 유저 가져오기
-    notice_list = await user1.get_notice()
-    for notice in notice_list:
+    notice_list = await user1.get_notice() # 공지사항 가져오기
+    for notice in notice_list: # 정보 출력
         print(
             f"공지사항 | {notice.id} | {notice.title}\n작성자: {notice.group_name} 소속 {notice.author}\n{notice.content}\n\n"
         )

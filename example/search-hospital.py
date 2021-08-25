@@ -14,8 +14,8 @@ async def search_hospital():
         password="4자리 비밀번호",
     )
     user1 = user[-1]  # 첫번째 유저 가져오기
-    hospital_list = await user1.search_hospital(location="경기", name="보건소")
-    for hospital in hospital_list:
+    hospital_list = await user1.search_hospital(location="경기", name="보건소") # 지역을 경기도, 키워드를 보건소로 설정하고 병원, 보건소 검색
+    for hospital in hospital_list: # 정보 출력
         print(
             f"병원 | {hospital.name}, 주소: {hospital.state} {hospital.city} | 영업시간: {hospital.schedule} | 전화번호 {hospital.tell}\n\n"
         )
