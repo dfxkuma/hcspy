@@ -1,6 +1,6 @@
 # HCSPY
 
-[![Send mail](https://img.shields.io/badge/-decav27@gmail.com-63d863?style=flat-square&logo=gmail&logoColor=white&link=mailto:decave27@gmail.com)](mailto:decave27@gmail.com) [![Badge](https://img.shields.io/pypi/v/hcspy?label=Version&style=flat-square)](https://pypi.org/project/hcspy/) [![Send mail](https://img.shields.io/pypi/dm/hcspy?color=orange&label=Downloads&style=flat-square)](https://pypi.org/project/hcspy/) [![Licence](https://img.shields.io/pypi/l/hcspy?label=License&style=flat-square)](https://github.com/decave27/hcspy/blob/main/LICENSE) [![Badge](https://img.shields.io/pypi/status/hcspy?color=%230099ff&label=Status&style=flat-square)]() <br>
+[![Send mail](https://img.shields.io/badge/-decave27@gmail.com-63d863?style=flat-square&logo=gmail&logoColor=white&link=mailto:decave27@gmail.com)](mailto:decave27@gmail.com) [![Badge](https://img.shields.io/pypi/v/hcspy?label=Version&style=flat-square)](https://pypi.org/project/hcspy/) [![Send mail](https://img.shields.io/pypi/dm/hcspy?color=orange&label=Downloads&style=flat-square)](https://pypi.org/project/hcspy/) [![Licence](https://img.shields.io/pypi/l/hcspy?label=License&style=flat-square)](https://github.com/decave27/hcspy/blob/main/LICENSE) [![Badge](https://img.shields.io/pypi/status/hcspy?color=%230099ff&label=Status&style=flat-square)]() <br>
 
 파이썬 코로나 자가잔단 라이브러리입니다.
 
