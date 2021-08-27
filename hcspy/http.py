@@ -19,19 +19,10 @@ async def content_type(response):
 class Route:
     BASE: ClassVar[str] = "https://hcs.eduro.go.kr/v2"
 
-    def __init__(
-        self, method: Literal["GET", "POST"], path: str, **parameters: Any
-    ) -> None:
+    def __init__(self, method: Literal["GET", "POST"], path: str) -> None:
         self.path: str = path
         self.method: str = method
         url = self.BASE + self.path
-        if parameters:
-            url = url.format_map(
-                {
-                    k: _uriquote(v) if isinstance(v, str) else v
-                    for k, v in parameters.items()
-                }
-            )
         self.url: str = url
 
     @property
@@ -149,23 +140,28 @@ class HTTPClient:
         school_type: str
             기관 타입을 선택합니다.
         """
-        _level = multi_finder(data=school_levels, keyword=level, prefix="level")
-        _area = multi_finder(data=school_areas, keyword=area, prefix="area")
-        _school_type = multi_finder(data=login_level, keyword=school_type, prefix="")
-        _route = url_create_with(
+        level = multi_finder(data=school_levels, keyword=level, prefix="level")
+        area = multi_finder(data=school_areas, keyword=area, prefix="area")
+        school_type = multi_finder(data=login_level, keyword=school_type, prefix="")
+        route = url_create_with(
             "/searchSchool",
             orgName=name,
-            lctnScCode=_area,
-            schulCrseScCod=_level,
-            loginType=_school_type,
+            lctnScCode=area,
+            schulCrseScCod=level,
+            loginType=school_type,
         )
-        response = await self._http.request(Route("GET", _route, name=name))
+        response = await self._http.request(Route("GET", route))
         if len(response["schulList"]) < 0:
             raise SchoolNotFound(f"{name} 학교를 찾지 못했습니다.")
         return response["schulList"]
 
-    async def get_token(
-        self, endpoint: str, code: str, name: str, birthday: str
+    async def find_user(
+        self,
+        endpoint: str,
+        code: str,
+        name: str,
+        birthday: str,
+        school_type: str = "school",
     ) -> Any:
         """
         api를 사용하기 위한 토큰을 발급합니다.
@@ -179,7 +175,9 @@ class HTTPClient:
         name: str
             사용자 이름을 입력합니다.
         birthday: str
-            본인의 생년월일 8자리를 입력합니다.
+            본인의 생년월일 6자리를 입력합니다.
+        school_type: str
+            기관 타입을 선택합니다.
         """
         route = Route("POST", "/v2/findUser")
         route.endpoint = endpoint
@@ -188,7 +186,7 @@ class HTTPClient:
                 route,
                 json={
                     "birthday": encrypt_login(birthday),
-                    "loginType": "school",
+                    "loginType": school_type,
                     "name": encrypt_login(name),
                     "orgCode": code,
                     "stdntPHo": None,
@@ -255,7 +253,13 @@ class HTTPClient:
         return response
 
     async def check_survey(
-        self, endpoint: str, token: str, log_name: Optional[str] = None
+        self,
+        endpoint: str,
+        token: str,
+        option1: bool,
+        option2: bool,
+        option3: bool,
+        log_name: Optional[str] = None,
     ) -> Any:
         """자가진단을 모두 증상 없음으로 체크합니다.
 
@@ -265,33 +269,38 @@ class HTTPClient:
             학교 api 주소를 입력합니다.
         token: str
             사용자 토큰을 입력합니다.
+        option1: bool
+            자가진단 설문 옵션 1 입니다.
+        option2: bool
+            자가진단 설문 옵션 2 입니다.
+        option3: bool
+            자가진단 설문 옵션 3 입니다.
         log_name: Optional[str]
             자가진단 로그 이름을 지정합니다.
         """
         route = Route("POST", "/registerServey")
         route.endpoint = endpoint
         data = {
-            "rspns01": "1",
-            "rspns02": "1",
+            "rspns01": "2" if option1 else "1",
+            "rspns02": "0" if option2 else "1",
             "rspns03": None,
             "rspns04": None,
             "rspns05": None,
             "rspns06": None,
             "rspns07": None,
             "rspns08": None,
-            "rspns09": "0",
+            "rspns09": "1" if option3 else "0",
             "rspns10": None,
             "rspns11": None,
             "rspns12": None,
             "rspns13": None,
             "rspns14": None,
             "rspns15": None,
-            "rspns00": "Y",
+            "rspns00": "Y" if not option1 and not option2 and not option3 else "N",
             "deviceUuid": "",
             "upperToken": token,
             "upperUserNameEncpt": log_name,
         }
-        print(data)
         response = await self._http.request(
             route, json=data, headers={"Authorization": token}
         )
@@ -309,7 +318,7 @@ class HTTPClient:
         token: str
             사용자 토큰을 입력합니다.
         password: str
-            기존 비밀번호 4자리를 입력합니다. 입력값이 없을 경우 자동으로 비밀번호를 가져옵니다.
+            기존 비밀번호 4자리를 입력합니다.
         new_password: str
             새로운 비밀번호 4자리를 입력합니다.
         """
@@ -522,4 +531,4 @@ class HTTPClient:
 
     async def close(self) -> Any:
         """http 세션을 닫습니다"""
-        await self._http.session.close()
+        await self._http.__session.close()

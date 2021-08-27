@@ -25,6 +25,7 @@ def multi_finder(
     for key, value in data.items():
         if keyword in value:
             return key.replace(prefix, "")
+    return None
 
 
 def url_create_with(url: str, **query) -> Optional[str]:
