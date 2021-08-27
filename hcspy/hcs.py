@@ -1,9 +1,10 @@
-import aiohttp
-from typing import Optional, List
+from typing import List, Optional, Any
 
+import aiohttp
+
+from .errors import AuthorizeError
 from .http import HTTPClient, Route
 from .model import School
-from .errors import AuthorizeError
 from .user import User
 
 
@@ -49,7 +50,7 @@ class HCSClient:
         area: Optional[str]
             학교 지역을 선택합니다.
         school_type: str
-            기관 타입을 선택합니다.
+            기관 타입을 입력합니다.
         """
         response = await self._http_client.search_school(
             name=name,
@@ -71,7 +72,7 @@ class HCSClient:
 
     async def find_user(
         self, school: School, name: str, birthday: str, school_type: str = "school"
-    ) -> dict:
+    ) -> Any:
         """
         api를 사용하기 위한 토큰을 발급합니다.
 
@@ -83,6 +84,8 @@ class HCSClient:
             사용자 이름을 입력합니다.
         birthday: str
             본인의 생년월일 8자리를 입력합니다.
+        school_type: str
+            기관의 종류를 입력합니다.
         """
         response = await self._http_client.find_user(
             endpoint=school.endpoint,
@@ -100,7 +103,7 @@ class HCSClient:
         birthday: str,
         password: str,
         school_type: str = "school",
-    ):
+    ) -> List[User]:
         """
         기본 정보를 빠르게 입력하여 로그인을 진행합니다.
 
@@ -115,7 +118,7 @@ class HCSClient:
         password: str
             사용자 비밀번호 4자리를 입력합니다.
         school_type: str
-            기관 타입을 선택합니다.
+            기관 타입을 입력합니다.
         """
         schools = await self.search_school(name=school_name)
         school = schools[0]
@@ -168,7 +171,7 @@ class HCSClient:
         birthday: str,
         password: str,
         school_type: str = "school",
-    ):
+    ) -> List[User]:
         """자가진단 사이트에 로그인을 진행합니다.
 
         Parameters
@@ -182,7 +185,7 @@ class HCSClient:
         password: str
             사용자 비밀번호 4자리를 입력합니다.
         school_type: str
-            기관 타입을 선택합니다.
+            기관 타입을 입력합니다.
         """
         user_data = await self.find_user(
             school=school, name=name, birthday=birthday, school_type=school_type

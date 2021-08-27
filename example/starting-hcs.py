@@ -1,10 +1,11 @@
 # 자가진단을 처음 하는 유저 가입 및 자가진단 실행 예제
 
-from hcspy import HCSClient
 from asyncio import run
 
+from hcspy import HCSClient
 
-async def self_check():
+
+async def self_check() -> None:
     client = HCSClient()
     school = await client.search_school(name="신일중학교", level="중학교", area="")
     user = await client.login(

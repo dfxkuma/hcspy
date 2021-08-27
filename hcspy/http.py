@@ -1,19 +1,20 @@
-import aiohttp
-from typing import ClassVar, Any, Optional, Literal, Dict
-from urllib.parse import quote as _uriquote
+import contextlib
 from json import dumps
+from typing import Any, ClassVar, Dict, Literal, Optional
 
-from .errors import HTTPException, SchoolNotFound, AuthorizeError, PasswordLengthError
-from .utils import encrypt_login, multi_finder, url_create_with
+import aiohttp
+
+from .data import login_level, school_areas, school_levels
+from .errors import (AuthorizeError, HTTPException, PasswordLengthError,
+                     SchoolNotFound)
 from .transkey import mTransKey
-from .data import school_areas, school_levels, login_level
+from .utils import encrypt_login, multi_finder, url_create_with
 
 
-async def content_type(response):
-    try:
-        return await response.json()
-    except Exception:
-        return await response.text()
+async def content_type(response: Any) -> Any:
+    with contextlib.suppress(Exception):
+        return response.json()
+    return response.text()
 
 
 class Route:
@@ -22,7 +23,7 @@ class Route:
     def __init__(self, method: Literal["GET", "POST"], path: str) -> None:
         self.path: str = path
         self.method: str = method
-        url = self.BASE + self.path
+        url: str = self.BASE + self.path
         self.url: str = url
 
     @property
@@ -30,7 +31,7 @@ class Route:
         return self.BASE
 
     @endpoint.setter
-    def endpoint(self, value) -> None:
+    def endpoint(self, value: str) -> None:
         self.url = value + self.path
 
 
@@ -71,9 +72,10 @@ class HTTPRequest:
         header["Sec-Fetch-Dest"] = "empty"
         header["Sec-Fetch-Mode"] = "cors"
         header["Sec-Fetch-Site"] = "same-site"
-        header[
-            "User-Agent"
-        ] = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1"
+        header["User-Agent"] = (
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) "
+            "Version/13.0.3 Mobile/15E148 Safari/604.1 "
+        )
         header["X-Requested-With"] = "XMLHttpRequest"
         return header
 
@@ -98,8 +100,8 @@ class HTTPRequest:
         headers = self.set_header(headers)
 
         if "json" in kwargs:
-            ContentType = "x-www-form-urlencoded" if method == "GET" else "json"
-            headers["Content-Type"] = f"application/{ContentType};charset=UTF-8"
+            _content_type = "x-www-form-urlencoded" if method == "GET" else "json"
+            headers["Content-Type"] = f"application/{_content_type};charset=UTF-8"
         if self._cookie_jar:
             kwargs["cookie_jar"] = self._cookie_jar
 
@@ -354,7 +356,7 @@ class HTTPClient:
         hm = mtk.hmac_digest(encrypted.encode())
         route = Route("POST", "/v2/validatePassword")
         route.endpoint = endpoint
-        data = {
+        data: Dict[str, Any] = {
             "password": dumps(
                 {
                     "raon": [
@@ -436,7 +438,7 @@ class HTTPClient:
         count: int
            최대로 가져올 공지사항의 갯수를 설정합니다. 기본값은 30 입니다.
         """
-        url = url_create_with(
+        url: Optional[str] = url_create_with(
             "/v2/selectNoticeList",
             currentPageNumber=page,
             listCount=count,
@@ -498,7 +500,7 @@ class HTTPClient:
         )
 
     async def search_hospital(
-        self, endpoint: str, token: str, location: str = None, name: str = None
+        self, endpoint: str, token: str, location: Optional[str] = None, name: Optional[str] = None
     ) -> Any:
         """
         보건소나 병원을 검색합니다.
@@ -524,12 +526,12 @@ class HTTPClient:
             url,
         )
         route.endpoint = endpoint
-        response = await self._http.request(
+        response: Any = await self._http.request(
             route,
             headers={"Authorization": token},
         )
         return response
 
-    async def close(self) -> Any:
+    async def close(self) -> None:
         """http 세션을 닫습니다"""
         await self._http.__session.close()

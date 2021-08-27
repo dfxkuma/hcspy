@@ -11,7 +11,7 @@ from . import seed
 
 
 class Crypto:
-    def __init__(self):
+    def __init__(self) -> None:
         self.uuid = os.urandom(int(32)).hex()
         self.genSessionKey = os.urandom(int(8)).hex()
         self.key = None

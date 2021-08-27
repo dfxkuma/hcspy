@@ -1,25 +1,24 @@
-from typing import (
-    Optional,
-    List,
-)
+from typing import Any, List, Optional, Dict
+
 from .errors import AlreadyAgreed
-from .model import Board, Hospital
+from .model import Board, Hospital, School
+from .http import HTTPClient
 
 
 class User:
     def __init__(
         self,
-        data: dict,
-        group_data: dict,
-        info_data: dict,
-        state: "HTTPClient",
+        data: Dict[str, Any],
+        group_data: Dict[str, Any],
+        info_data: Dict[str, Any],
+        state: HTTPClient,
         token: str,
     ) -> None:
-        self.state: "HTTPClient" = state
+        self.state: HTTPClient = state
         self.state_token: str = token
         self.id: int = int(group_data.get("userPNo"))
         self.name: str = str(data.get("userName"))
-        self.school: "School" = info_data.get("school")
+        self.school: School = info_data.get("school")
         self.birthday: int = info_data.get("birthday")
         self.password: int = info_data.get("password")
         self.is_checked_survey: bool = (
@@ -88,7 +87,7 @@ class User:
         """
         if not log_name:
             log_name = self.name
-        data = await self.state.get_user(
+        data: Any = await self.state.get_user(
             endpoint=self.school.endpoint,
             code=self.school.id,
             user_id=str(self.id),
@@ -183,7 +182,8 @@ class User:
                 schedule_saturday=hospital["satBizHour"],
                 schedule_sunday=hospital["sunBizHour"],
                 tell=hospital["ofcTelNo"],
-                map_url=f'https://www.mohw.go.kr/react/ncov_map_page.jsp?region={hospital["sido"]}&town={hospital["sigNm"]}&hospitalNm={hospital["hsptNm"]}',
+                map_url='https://www.mohw.go.kr/react/ncov_map_page.jsp'
+                        f'?region={hospital["sido"]}&town={hospital["sigNm"]}&hospitalNm={hospital["hsptNm"]}',
             )
             for hospital in response
         ]

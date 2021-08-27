@@ -1078,7 +1078,7 @@ def endianchange(data):
 
 
 class SEED:
-    def __init__(self):
+    def __init__(self) -> None:
         self.KC0 = 2654435769
         self.KC1 = 1013904243
         self.KC2 = 2027808486

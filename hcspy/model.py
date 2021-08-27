@@ -1,7 +1,7 @@
-import dataclasses
+from dataclasses import dataclass
 
 
-@dataclasses.dataclass(repr=True)
+@dataclass(repr=True)
 class School:
     id: str
     name: str
@@ -11,7 +11,7 @@ class School:
     endpoint: str
 
 
-@dataclasses.dataclass(repr=True)
+@dataclass(repr=True)
 class Board:
     id: str
     title: str
@@ -23,7 +23,7 @@ class Board:
     content: str
 
 
-@dataclasses.dataclass(repr=True)
+@dataclass(repr=True)
 class Hospital:
     name: str
     state: str
