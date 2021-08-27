@@ -1,19 +1,21 @@
-import aiohttp
-from typing import ClassVar, Any, Optional, Literal, Dict
-from urllib.parse import quote as _uriquote
+import contextlib
 from json import dumps
+from typing import Any, ClassVar, Dict, Literal, Optional
 
-from .errors import HTTPException, SchoolNotFound, AuthorizeError, PasswordLengthError
-from .utils import encrypt_login, multi_finder, url_create_with
+import aiohttp
+
+from .data import login_level, school_areas, school_levels
+from .errors import (AuthorizeError, HTTPException, PasswordLengthError,
+                     SchoolNotFound)
+from .keypad import KeyPad
 from .transkey import mTransKey
-from .data import school_areas, school_levels, login_level
+from .utils import encrypt_login, multi_finder, url_create_with
 
 
-async def content_type(response):
-    try:
-        return await response.json()
-    except Exception:
-        return await response.text()
+def content_type(response: Any) -> Any:
+    with contextlib.suppress(Exception):
+        return response.json()
+    return response.text()
 
 
 class Route:
@@ -22,7 +24,7 @@ class Route:
     def __init__(self, method: Literal["GET", "POST"], path: str) -> None:
         self.path: str = path
         self.method: str = method
-        url = self.BASE + self.path
+        url: str = self.BASE + self.path
         self.url: str = url
 
     @property
@@ -30,14 +32,14 @@ class Route:
         return self.BASE
 
     @endpoint.setter
-    def endpoint(self, value) -> None:
+    def endpoint(self, value: str) -> None:
         self.url = value + self.path
 
 
 class HTTPRequest:
     def __init__(
         self,
-        session: Optional[aiohttp.ClientSession] = None,
+        session: aiohttp.ClientSession = aiohttp.ClientSession(),
     ):
         """새 http 세션을 생성합니다.
 
@@ -46,7 +48,7 @@ class HTTPRequest:
         session: Optional[aiohttp.ClientSession]
             기존 세션을 생성합니다.세션이 없을 경우 요청할 때 새로 생성합니다.
         """
-        self.__session = session
+        self.session: aiohttp.ClientSession = session
         self._cookie_jar = aiohttp.CookieJar()
 
     @staticmethod
@@ -71,9 +73,10 @@ class HTTPRequest:
         header["Sec-Fetch-Dest"] = "empty"
         header["Sec-Fetch-Mode"] = "cors"
         header["Sec-Fetch-Site"] = "same-site"
-        header[
-            "User-Agent"
-        ] = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1"
+        header["User-Agent"] = (
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) "
+            "Version/13.0.3 Mobile/15E148 Safari/604.1 "
+        )
         header["X-Requested-With"] = "XMLHttpRequest"
         return header
 
@@ -89,21 +92,17 @@ class HTTPRequest:
         """
         method = route.method
         url = route.url
-        headers = kwargs.get("headers", None)
+        headers: Dict[str, Any] = kwargs.get("headers", {})
 
-        if not self.__session:
-            self.__session = aiohttp.ClientSession()
-        if not headers:
-            headers: Dict[str, str] = {}
         headers = self.set_header(headers)
 
         if "json" in kwargs:
-            ContentType = "x-www-form-urlencoded" if method == "GET" else "json"
-            headers["Content-Type"] = f"application/{ContentType};charset=UTF-8"
+            _content_type = "x-www-form-urlencoded" if method == "GET" else "json"
+            headers["Content-Type"] = f"application/{_content_type};charset=UTF-8"
         if self._cookie_jar:
             kwargs["cookie_jar"] = self._cookie_jar
 
-        async with self.__session.request(method, url, **kwargs) as response:
+        async with self.session.request(method, url, **kwargs) as response:
             data = await content_type(response)
         if response.status != 200:
             raise HTTPException(response.status, data)
@@ -126,7 +125,7 @@ class HTTPClient:
         name: str,
         level: Optional[str] = None,
         area: Optional[str] = None,
-        school_type: str = "school",
+        school_type: Optional[str] = "school",
     ) -> Any:
         """학교를 검색합니다
 
@@ -214,7 +213,7 @@ class HTTPClient:
         response = await self._http.request(route, headers={"Authorization": token})
         return response
 
-    async def password_exist(self, endpoint: str, token: str) -> Any:
+    async def password_exist(self, endpoint: str, token: str) -> bool:
         """
         비밀번호를 설정했는지 확인합니다.
 
@@ -309,7 +308,7 @@ class HTTPClient:
 
     async def change_password(
         self, endpoint: str, token: str, password: str, new_password: str
-    ) -> None:
+    ) -> Any:
         """자가진단 비밀번호를 변경합니다
 
         Parameters
@@ -349,12 +348,12 @@ class HTTPClient:
             사용자 비밀번호 4자리를 입력합니다.
         """
         mtk = mTransKey("https://hcs.eduro.go.kr/transkeyServlet")
-        keypad = await mtk.new_keypad("number", "password", "password", "password")
-        encrypted = keypad.encrypt_password(password)
-        hm = mtk.hmac_digest(encrypted.encode())
+        keypad: KeyPad = await mtk.new_keypad("number", "password", "password", "password")
+        encrypted: str = keypad.encrypt_password(password)
+        hm: str = mtk.hmac_digest(encrypted.encode())
         route = Route("POST", "/v2/validatePassword")
         route.endpoint = endpoint
-        data = {
+        data: Dict[str, Any] = {
             "password": dumps(
                 {
                     "raon": [
@@ -436,7 +435,7 @@ class HTTPClient:
         count: int
            최대로 가져올 공지사항의 갯수를 설정합니다. 기본값은 30 입니다.
         """
-        url = url_create_with(
+        url: str = url_create_with(
             "/v2/selectNoticeList",
             currentPageNumber=page,
             listCount=count,
@@ -491,14 +490,14 @@ class HTTPClient:
         """
         route = Route("GET", "/v2/logout")
         route.endpoint = endpoint
-        response = await self._http.request(
+        _response = await self._http.request(
             route,
             json={},
             headers={"Authorization": token},
         )
 
     async def search_hospital(
-        self, endpoint: str, token: str, location: str = None, name: str = None
+        self, endpoint: str, token: str, location: Optional[str] = None, name: Optional[str] = None
     ) -> Any:
         """
         보건소나 병원을 검색합니다.
@@ -524,12 +523,15 @@ class HTTPClient:
             url,
         )
         route.endpoint = endpoint
-        response = await self._http.request(
+        response: Any = await self._http.request(
             route,
             headers={"Authorization": token},
         )
         return response
 
-    async def close(self) -> Any:
+    async def request(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._http.request(*args, **kwargs)
+
+    async def close(self) -> None:
         """http 세션을 닫습니다"""
-        await self._http.__session.close()
+        await self._http.session.close()

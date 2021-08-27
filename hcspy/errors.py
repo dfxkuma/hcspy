@@ -1,4 +1,4 @@
-from typing import Union, Any, Dict
+from typing import Any, Dict, Union
 
 
 class HCSException(Exception):
@@ -6,7 +6,7 @@ class HCSException(Exception):
 
 
 class HTTPException(HCSException):
-    def __init__(self, code: Any, message: Union[Any, Dict[str, Any]]):
+    def __init__(self, code: Any, message: Union[Any, Dict[str, Any]]) -> None:
         self.code = code
         self.message = message
 

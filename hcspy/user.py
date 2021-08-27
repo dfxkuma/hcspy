@@ -1,31 +1,30 @@
-from typing import (
-    Optional,
-    List,
-)
+from typing import Any, List, Optional, Dict
+
 from .errors import AlreadyAgreed
-from .model import Board, Hospital
+from .model import Board, Hospital, School
+from .http import HTTPClient
 
 
 class User:
     def __init__(
         self,
-        data: dict,
-        group_data: dict,
-        info_data: dict,
-        state: "HTTPClient",
+        data: Dict[str, Any],
+        group_data: Dict[str, Any],
+        info_data: Dict[str, Any],
+        state: HTTPClient,
         token: str,
     ) -> None:
-        self.state: "HTTPClient" = state
+        self.state: HTTPClient = state
         self.state_token: str = token
-        self.id: int = int(group_data.get("userPNo"))
+        self.id: int = int(group_data.get("userPNo", 0))
         self.name: str = str(data.get("userName"))
-        self.school: "School" = info_data.get("school")
-        self.birthday: int = info_data.get("birthday")
-        self.password: int = info_data.get("password")
+        self.school: School = info_data.get("school", None)
+        self.birthday: int = info_data.get("birthday", 0)
+        self.password: int = info_data.get("password", 0)
         self.is_checked_survey: bool = (
             True if group_data.get("otherYn") == "N" else True
         )
-        self._register_at: str = data.get("registerDtm")
+        self._register_at: str = data.get("registerDtm", "")
         self.is_healthy: bool = data.get("isHealthy", True)
         self.wrong_password_count: int = data.get("wrongPassCnt", 0)
         self.unread_notice_count: int = data.get("newNoticeCount", 0)
@@ -33,10 +32,8 @@ class User:
         self.agreement_required: bool = info_data.get("agreement_required", False)
         self.is_logout: bool = False
 
-    def __repr__(self):
-        if self.is_logout:
-            return f"<User Logged out>"
-        return f"<User id={self.id} name={self.name}>"
+    def __repr__(self) -> str:
+        return f"<User id={self.id} name={self.name} is_logout={self.is_logout}>"
 
     async def password_exist(self) -> bool:
         """비밀번호를 설정했는지 확인합니다."""
@@ -88,7 +85,7 @@ class User:
         """
         if not log_name:
             log_name = self.name
-        data = await self.state.get_user(
+        data: Any = await self.state.get_user(
             endpoint=self.school.endpoint,
             code=self.school.id,
             user_id=str(self.id),
@@ -157,8 +154,8 @@ class User:
         ]
 
     async def search_hospital(
-        self, location: str = None, name: str = None
-    ) -> Optional[List[Hospital]]:
+        self, location: Optional[str] = None, name: Optional[str] = None
+    ) -> List[Hospital]:
         """
         보건소나 병원을 검색합니다.
         Parameters
@@ -183,7 +180,8 @@ class User:
                 schedule_saturday=hospital["satBizHour"],
                 schedule_sunday=hospital["sunBizHour"],
                 tell=hospital["ofcTelNo"],
-                map_url=f'https://www.mohw.go.kr/react/ncov_map_page.jsp?region={hospital["sido"]}&town={hospital["sigNm"]}&hospitalNm={hospital["hsptNm"]}',
+                map_url='https://www.mohw.go.kr/react/ncov_map_page.jsp'
+                        f'?region={hospital["sido"]}&town={hospital["sigNm"]}&hospitalNm={hospital["hsptNm"]}',
             )
             for hospital in response
         ]

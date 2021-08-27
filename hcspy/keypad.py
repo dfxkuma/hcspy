@@ -1,8 +1,9 @@
 from random import randint
+from typing import List
 
 
 class KeyPad:
-    def __init__(self, crypto, key_type, skip_data, keys, initTime):
+    def __init__(self, crypto, key_type, skip_data, keys, initTime) -> None:
         if key_type != "number":
             raise Exception("Only Number")
 
@@ -12,7 +13,7 @@ class KeyPad:
         self.keys = keys
         self.initTime = initTime
 
-    def get_geo(self, message):
+    def get_geo(self, message) -> List:
         geos = []
         for val in list(message):
             if val.isnumeric():
@@ -55,7 +56,7 @@ class KeyPad:
             out += "$" + self.crypto.seed_encrypt(iv, data).hex(",")
         return out
 
-    def encrypt_password(self, pw):
+    def encrypt_password(self, pw) -> str:
         geos = self.get_geo(pw)
         return self.geos_encrypt(geos)
 

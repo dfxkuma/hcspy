@@ -2,6 +2,7 @@
 
 import os
 import re
+from typing import List
 
 from setuptools import find_packages, setup
 
@@ -13,7 +14,7 @@ with open("hcspy/__init__.py", encoding="UTF8") as f:
 
 path = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/")
 
-requirements = []
+requirements: List[str] = []
 with open(f"{path}/requirements.txt", encoding="UTF8") as f:
     requirements = f.read().splitlines()
 

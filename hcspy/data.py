@@ -1,4 +1,6 @@
-school_areas = {
+from typing import Dict, List
+
+school_areas: Dict[str, List[str]] = {
     "area1": ["서울", "서울시", "서울교육청", "서울시교육청", "서울특별시", "서울특별시교육청"],
     "area2": ["부산", "부산광역시", "부산시", "부산교육청", "부산광역시교육청"],
     "area3": ["대구", "대구광역시", "대구시", "대구교육청", "대구광역시교육청"],
@@ -19,7 +21,7 @@ school_areas = {
 }
 
 
-school_levels = {
+school_levels: Dict[str, List[str]] = {
     "level1": ["유치원", "유", "유치"],
     "level2": ["초등학교", "초", "초등"],
     "level3": ["중학교", "중", "중등"],
@@ -27,7 +29,7 @@ school_levels = {
     "level5": ["특수학교", "특", "특수", "특별"],
 }
 
-login_level = {
+login_level: Dict[str, List[str]] = {
     "school": [
         "유치원",
         "유",

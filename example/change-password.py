@@ -1,10 +1,11 @@
 # 비밀번호 변경 예제
 
-from hcspy import HCSClient
 from asyncio import run
 
+from hcspy import HCSClient
 
-async def change_password():
+
+async def change_password() -> None:
     client = HCSClient()
     school = await client.search_school(name="학교 이름", level="학교 레벨/유형", area="지역")
     user = await client.login(
@@ -15,7 +16,7 @@ async def change_password():
     )
     user1 = user[-1]  # 첫번째 유저 가져오기
     await user1.change_password(
-        password="기존 4자리 비밀번호", new_password="새로운 4자리 비밀번호"
+        password=1234  # 새로운 비밀번호 4자리
     )  # 비밀번호 변경
 
 
