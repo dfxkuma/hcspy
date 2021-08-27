@@ -31,8 +31,7 @@ class Route:
 
     @endpoint.setter
     def endpoint(self, value) -> None:
-        self.BASE = value
-        self.url = self.BASE + self.path
+        self.url = value + self.path
 
 
 class HTTPRequest:
@@ -113,6 +112,8 @@ class HTTPRequest:
 
 
 class HTTPClient:
+    __slots__ = ("_session", "_http")
+
     def __init__(
         self, session: aiohttp.ClientSession = aiohttp.ClientSession()
     ) -> None:

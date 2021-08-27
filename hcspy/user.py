@@ -1,7 +1,6 @@
 from typing import (
     Optional,
     List,
-    TYPE_CHECKING,
 )
 from .errors import AlreadyAgreed
 from .model import Board, Hospital

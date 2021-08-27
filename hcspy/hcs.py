@@ -10,6 +10,8 @@ from .user import User
 class HCSClient:
     """ "https://hcs.eduro.go.kr api 레퍼 Client 입니다."""
 
+    __slots__ = "_http_client"
+
     def __init__(
         self,
         session: Optional[aiohttp.ClientSession] = None,
