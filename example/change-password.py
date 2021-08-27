@@ -16,7 +16,7 @@ async def change_password() -> None:
     )
     user1 = user[-1]  # 첫번째 유저 가져오기
     await user1.change_password(
-        password="기존 4자리 비밀번호", new_password="새로운 4자리 비밀번호"
+        password=1234  # 새로운 비밀번호 4자리
     )  # 비밀번호 변경
 
 

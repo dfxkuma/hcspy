@@ -30,7 +30,7 @@ def encrypt_login(content: str) -> str:
 
 
 def multi_finder(
-    data: Dict[str, List[str]], keyword: str, prefix: str
+    data: Dict[str, List[str]], keyword: Optional[str], prefix: str
 ) -> Optional[str]:
     for key, value in data.items():
         if keyword in value:

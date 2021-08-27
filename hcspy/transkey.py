@@ -7,7 +7,7 @@ from .keypad import KeyPad
 
 
 class mTransKey:
-    def __init__(self, servlet_url):
+    def __init__(self, servlet_url) -> None:
         self.servlet_url = servlet_url
         self.crypto = crypto.Crypto()
         self.token = ""
@@ -17,7 +17,7 @@ class mTransKey:
         self.number = []
         self.keyIndex = ""
 
-    async def _get_data(self):
+    async def _get_data(self) -> None:
         async with aiohttp.ClientSession() as session:
             await self._get_token(session)
             await self._get_init_time(session)
@@ -70,7 +70,7 @@ class mTransKey:
             self.qwerty = qwerty_keys
             self.number = number_keys
 
-    async def new_keypad(self, key_type, name, inputName, fieldType="password"):
+    async def new_keypad(self, key_type, name, inputName, fieldType="password") -> KeyPad:
         await self._get_data()
         async with aiohttp.ClientSession() as session:
             key_index_res = await session.post(
@@ -120,8 +120,8 @@ class mTransKey:
 
                 return KeyPad(self.crypto, key_type, skip, self.number, self.initTime)
 
-    def hmac_digest(self, message):
+    def hmac_digest(self, message: bytes) -> str:
         return self.crypto.hmac_digest(message)
 
-    def get_uuid(self):
+    def get_uuid(self) -> str:
         return self.crypto.uuid

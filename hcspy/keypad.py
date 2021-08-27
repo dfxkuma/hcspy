@@ -56,7 +56,7 @@ class KeyPad:
             out += "$" + self.crypto.seed_encrypt(iv, data).hex(",")
         return out
 
-    def encrypt_password(self, pw):
+    def encrypt_password(self, pw) -> str:
         geos = self.get_geo(pw)
         return self.geos_encrypt(geos)
 

@@ -26,10 +26,10 @@ class Crypto:
         cipher = PKCS1_OAEP.new(key=self.key, hashAlgo=SHA1)
         return cipher.encrypt(data).hex()
 
-    def get_encrypted_key(self):
+    def get_encrypted_key(self) -> str:
         return self.rsa_encrypt(self.genSessionKey.encode())
 
-    def hmac_digest(self, msg: bytes):
+    def hmac_digest(self, msg: bytes) -> str:
         return hmac.new(
             msg=msg, key=self.genSessionKey.encode(), digestmod=hashlib.sha256
         ).hexdigest()
