@@ -34,29 +34,29 @@ class HCSClient:
 
     async def search_school(
         self,
+        search_type: str,
         name: str,
         level: Optional[str] = None,
         area: Optional[str] = None,
-        school_type: str = "school",
     ) -> List[School]:
         """학교를 검색합니다
 
         Parameters
         ----------
+        search_type: str
+            기관 타입을 선택합니다.
         name: str
             검색할 학교 이름이나 키워드를 입력합니다
         level: Optional[str]
             학교 유형을 선택합니다.
         area: Optional[str]
             학교 지역을 선택합니다.
-        school_type: str
-            기관 타입을 입력합니다.
         """
         response = await self._http_client.search_school(
             name=name,
             level=level,
             area=area,
-            school_type=school_type,
+            search_type=search_type,
         )
         return [
             School(

@@ -5,8 +5,7 @@ from typing import Any, ClassVar, Dict, Literal, Optional
 import aiohttp
 
 from .data import login_level, school_areas, school_levels
-from .errors import (AuthorizeError, HTTPException, PasswordLengthError,
-                     SchoolNotFound)
+from .errors import AuthorizeError, HTTPException, PasswordLengthError, SchoolNotFound
 from .keypad import KeyPad
 from .transkey import mTransKey
 from .utils import encrypt_login, multi_finder, url_create_with
@@ -122,36 +121,44 @@ class HTTPClient:
 
     async def search_school(
         self,
+        search_type: str,
         name: str,
         level: Optional[str] = None,
         area: Optional[str] = None,
-        school_type: Optional[str] = "school",
     ) -> Any:
         """학교를 검색합니다
 
         Parameters
          ----------
+        search_type: str
+            기관 타입을 선택합니다.
         name: str
             검색할 학교 이름이나 키워드를 입력합니다
         level: Optional[str]
             학교 유형을 선택합니다.
         area: Optional[str]
             학교 지역을 선택합니다.
-        school_type: str
-            기관 타입을 선택합니다.
         """
-        level = multi_finder(data=school_levels, keyword=level, prefix="level")
-        area = multi_finder(data=school_areas, keyword=area, prefix="area")
-        school_type = multi_finder(data=login_level, keyword=school_type, prefix="")
-        route = url_create_with(
-            "/searchSchool",
-            orgName=name,
-            lctnScCode=area,
-            schulCrseScCod=level,
-            loginType=school_type,
-        )
+        if search_type == "school":
+            level = multi_finder(data=school_levels, keyword=level, prefix="level")
+            area = multi_finder(data=school_areas, keyword=area, prefix="area")
+            route = url_create_with(
+                "/searchSchool",
+                orgName=name,
+                lctnScCode=area,
+                schulCrseScCod=level,
+                loginType=search_type,
+            )
+        elif search_type == "univ":
+            route = url_create_with(
+                "/searchSchool",
+                orgName=name,
+                loginType=search_type,
+            )
+        else:
+            raise NotImplemented(f"{search_type} 유형 기관은 지원하지 않습니다.")
         response = await self._http.request(Route("GET", route))
-        if len(response["schulList"]) < 0:
+        if len(response["schulList"]) == 0:
             raise SchoolNotFound(f"{name} 학교를 찾지 못했습니다.")
         return response["schulList"]
 
@@ -348,7 +355,9 @@ class HTTPClient:
             사용자 비밀번호 4자리를 입력합니다.
         """
         mtk = mTransKey("https://hcs.eduro.go.kr/transkeyServlet")
-        keypad: KeyPad = await mtk.new_keypad("number", "password", "password", "password")
+        keypad: KeyPad = await mtk.new_keypad(
+            "number", "password", "password", "password"
+        )
         encrypted: str = keypad.encrypt_password(password)
         hm: str = mtk.hmac_digest(encrypted.encode())
         route = Route("POST", "/v2/validatePassword")
@@ -497,7 +506,11 @@ class HTTPClient:
         )
 
     async def search_hospital(
-        self, endpoint: str, token: str, location: Optional[str] = None, name: Optional[str] = None
+        self,
+        endpoint: str,
+        token: str,
+        location: Optional[str] = None,
+        name: Optional[str] = None,
     ) -> Any:
         """
         보건소나 병원을 검색합니다.
