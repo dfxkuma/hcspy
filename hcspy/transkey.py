@@ -70,7 +70,9 @@ class mTransKey:
             self.qwerty = qwerty_keys
             self.number = number_keys
 
-    async def new_keypad(self, key_type, name, inputName, fieldType="password") -> KeyPad:
+    async def new_keypad(
+        self, key_type, name, inputName, fieldType="password"
+    ) -> KeyPad:
         await self._get_data()
         async with aiohttp.ClientSession() as session:
             key_index_res = await session.post(

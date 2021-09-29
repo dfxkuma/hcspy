@@ -180,8 +180,8 @@ class User:
                 schedule_saturday=hospital["satBizHour"],
                 schedule_sunday=hospital["sunBizHour"],
                 tell=hospital["ofcTelNo"],
-                map_url='https://www.mohw.go.kr/react/ncov_map_page.jsp'
-                        f'?region={hospital["sido"]}&town={hospital["sigNm"]}&hospitalNm={hospital["hsptNm"]}',
+                map_url="https://www.mohw.go.kr/react/ncov_map_page.jsp"
+                f'?region={hospital["sido"]}&town={hospital["sigNm"]}&hospitalNm={hospital["hsptNm"]}',
             )
             for hospital in response
         ]
