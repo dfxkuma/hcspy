@@ -7,7 +7,9 @@ from hcspy import HCSClient
 
 async def search_hospital() -> None:
     client = HCSClient()
-    school = await client.search_school(name="학교 이름", level="학교 레벨/유형", area="지역")
+    school = await client.search_school(
+        search_type="school", name="학교 이름", level="학교 레벨/유형", area="지역"
+    )
     user = await client.login(
         school=school[-1],  # 검색한 학교들 중 최상위에 있는 학교 가져오기
         name="사용자 이름",

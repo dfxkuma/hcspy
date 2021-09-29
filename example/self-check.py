@@ -1,11 +1,11 @@
-# 공지사항 가져오기 예제
+# 자가진단 예제
 
 from asyncio import run
 
 from hcspy import HCSClient
 
 
-async def get_notice() -> None:
+async def self_check() -> None:
     client = HCSClient()
     school = await client.search_school(
         search_type="school", name="학교 이름", level="학교 레벨/유형", area="지역"
@@ -17,11 +17,7 @@ async def get_notice() -> None:
         password="4자리 비밀번호",
     )
     user1 = user[-1]  # 첫번째 유저 가져오기
-    notice_list = await user1.get_notice()  # 공지사항 가져오기
-    for notice in notice_list:  # 정보 출력
-        print(
-            f"공지사항 | {notice.id} | {notice.title}\n작성자: {notice.group_name} 소속 {notice.author}\n{notice.content}\n\n"
-        )
+    await user1.check(option1=False, option2=False, option3=False)  # 자가진단 실행
 
 
-run(get_notice())
+run(self_check())
