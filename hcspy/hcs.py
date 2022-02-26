@@ -96,70 +96,47 @@ class HCSClient:
         )
         return response
 
-    async def login_fast(
-        self,
-        name: str,
-        school_name: str,
-        birthday: str,
-        password: str,
-        school_type: str = "school",
+    async def token_login(
+        self, school: School, token: str, password: str
     ) -> List[User]:
         """
-        기본 정보를 빠르게 입력하여 로그인을 진행합니다.
-
+        자가진단 사이트에 유저 토큰으로 로그인합니다.
         Parameters
         ----------
-        name: str
-            사용자 이름을 입력합니다
-        school_name: str
-            학교 이름을 입력합니다.검색 결과의 첫번째 학교로 지정합니다.
-        birthday: str
-            사용자 생년월일 6자리를 입력합니다.
+        school: School
+            사용자의 학교 객체를 입력합니다.
+        token: str
+            유저 토큰을 입력합니다.
         password: str
             사용자 비밀번호 4자리를 입력합니다.
-        school_type: str
-            기관 타입을 입력합니다.
         """
-        schools = await self.search_school(name=school_name)
-        school = schools[0]
-        user_data = await self.find_user(
-            school=school, name=name, birthday=birthday, school_type=school_type
-        )
-        if not user_data.get("pInfAgrmYn") == "Y":
-            await self._http_client.update_agreement(
-                endpoint=school.endpoint, token=user_data.get("token")
-            )
-        if not await self._http_client.password_exist(
+        user_token = await self._http_client.use_security_keypad(
             endpoint=school.endpoint,
-            token=user_data.get("token"),
-        ):
-            raise AuthorizeError("설정된 비밀번호가 없습니다.")
-        user_token = await self._http_client.login(
-            endpoint=school.endpoint, token=user_data.get("token"), password=password
+            token=token,
+            password=password,
         )
         group = await self._http_client.get_group(
-            endpoint=school.endpoint,
-            token=user_token,
+            endpoint=school.endpoint, token=user_token["token"]
         )
         return [
             User(
-                data=await self._http_client.get_user(
+                user_data=await self._http_client.get_user(
                     endpoint=school.endpoint,
                     code=school.id,
                     user_id=user.get("userPNo"),
-                    token=user_token,
+                    token=user_token["token"],
                 ),
                 group_data=user,
                 info_data={
                     "school": school,
-                    "birthday": int(birthday),
+                    "birthday": None,
                     "password": int(password),
-                    "agreement_required": False
-                    if user_data.get("pInfAgrmYn") == "Y"
-                    else True,
+                    "agreement_required": True
+                    if user_token.get("pInfAgrmYn") == "Y"
+                    else False,
                 },
                 state=self._http_client,
-                token=user_token,
+                token=user_token["token"],
             )
             for user in group
         ]
@@ -190,7 +167,7 @@ class HCSClient:
         user_data = await self.find_user(
             school=school, name=name, birthday=birthday, school_type=school_type
         )
-        if not user_data.get("pInfAgrmYn") == "Y":
+        if not user_data.get("pInfAgrmYn") == "N":
             await self._http_client.update_agreement(
                 endpoint=school.endpoint, token=user_data.get("token")
             )
@@ -198,30 +175,32 @@ class HCSClient:
             endpoint=school.endpoint,
             token=user_data.get("token"),
         ):
-            raise AuthorizeError("설정된 비밀번호가 없습니다.")
-        user_token = await self._http_client.login(
+            raise AuthorizeError("설정된 비밀번호가 없습니다. 자가진단 사이트에서 초기 비밀번호를 설정하세요.")
+        user_token = await self._http_client.use_security_keypad(
             endpoint=school.endpoint, token=user_data.get("token"), password=password
         )
         group = await self._http_client.get_group(
-            endpoint=school.endpoint, token=user_token
+            endpoint=school.endpoint, token=user_token["token"]
         )
         return [
             User(
-                data=await self._http_client.get_user(
+                user_data=await self._http_client.get_user(
                     endpoint=school.endpoint,
                     code=school.id,
                     user_id=user.get("userPNo"),
-                    token=user_token,
+                    token=user_token["token"],
                 ),
                 group_data=user,
                 info_data={
                     "school": school,
                     "birthday": int(birthday),
                     "password": int(password),
-                    "agreement_required": user_data.get("agreementRequired"),
+                    "agreement_required": True
+                    if user_data.get("pInfAgrmYn") == "Y"
+                    else False,
                 },
                 state=self._http_client,
-                token=user_token,
+                token=user_token["token"],
             )
             for user in group
         ]

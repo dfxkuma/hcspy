@@ -1,10 +1,10 @@
 import contextlib
 from json import dumps
-from typing import Any, ClassVar, Dict, Literal, Optional
+from typing import Any, ClassVar, Dict, Literal, Optional, Union
 
 import aiohttp
 
-from .data import login_level, school_areas, school_levels
+from .data import school_areas, school_levels
 from .errors import AuthorizeError, HTTPException, PasswordLengthError, SchoolNotFound
 from .keypad import KeyPad
 from .transkey import mTransKey
@@ -119,6 +119,10 @@ class HTTPClient:
         self._session = session
         self._http = HTTPRequest(session=self._session)
 
+    @property
+    def http_session(self) -> HTTPRequest:
+        return self._http
+
     async def search_school(
         self,
         search_type: str,
@@ -149,6 +153,7 @@ class HTTPClient:
                 schulCrseScCod=level,
                 loginType=search_type,
             )
+            print(route)
         elif search_type == "univ":
             route = url_create_with(
                 "/searchSchool",
@@ -263,9 +268,6 @@ class HTTPClient:
         self,
         endpoint: str,
         token: str,
-        option1: bool,
-        option2: bool,
-        option3: bool,
         log_name: Optional[str] = None,
     ) -> Any:
         """자가진단을 모두 증상 없음으로 체크합니다.
@@ -276,34 +278,29 @@ class HTTPClient:
             학교 api 주소를 입력합니다.
         token: str
             사용자 토큰을 입력합니다.
-        option1: bool
-            자가진단 설문 옵션 1 입니다.
-        option2: bool
-            자가진단 설문 옵션 2 입니다.
-        option3: bool
-            자가진단 설문 옵션 3 입니다.
+
         log_name: Optional[str]
             자가진단 로그 이름을 지정합니다.
         """
         route = Route("POST", "/registerServey")
         route.endpoint = endpoint
         data = {
-            "rspns01": "2" if option1 else "1",
-            "rspns02": "0" if option2 else "1",
+            "rspns01": "1",
+            "rspns02": "1",
             "rspns03": None,
             "rspns04": None,
             "rspns05": None,
             "rspns06": None,
-            "rspns07": None,
-            "rspns08": None,
-            "rspns09": "1" if option3 else "0",
+            "rspns07": "0",
+            "rspns08": "0",
+            "rspns09": "0",
             "rspns10": None,
             "rspns11": None,
             "rspns12": None,
             "rspns13": None,
             "rspns14": None,
             "rspns15": None,
-            "rspns00": "Y" if not option1 and not option2 and not option3 else "N",
+            "rspns00": "Y",
             "deviceUuid": "",
             "upperToken": token,
             "upperUserNameEncpt": log_name,
@@ -342,8 +339,10 @@ class HTTPClient:
         )
         return response
 
-    async def login(self, endpoint: str, token: str, password: str) -> Any:
-        """보안 키보드를 이용해 로그인합니다
+    async def use_security_keypad(
+        self, endpoint: str, token: str, password: str
+    ) -> Any:
+        """보안 키보드를 사용해 서버에 데이터를 요청합니다
 
         Parameters
         ----------
