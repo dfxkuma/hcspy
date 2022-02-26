@@ -1,14 +1,16 @@
-from typing import Any, List, Optional, Dict
+from typing import Any, List, Optional, Dict, Union, Literal
 
+import io
 from .errors import AlreadyAgreed
 from .model import Board, Hospital, School
-from .http import HTTPClient
+from .http import HTTPClient, Route
+from .data import covid_19_guidelines, covid_self_test_guide_youtubeURL
 
 
 class User:
     def __init__(
         self,
-        data: Dict[str, Any],
+        user_data: Dict[str, Any],
         group_data: Dict[str, Any],
         info_data: Dict[str, Any],
         state: HTTPClient,
@@ -17,19 +19,19 @@ class User:
         self.state: HTTPClient = state
         self.state_token: str = token
         self.id: int = int(group_data.get("userPNo", 0))
-        self.name: str = str(data.get("userName"))
+        self.name: str = str(user_data.get("userName"))
         self.school: School = info_data.get("school", None)
         self.birthday: int = info_data.get("birthday", 0)
         self.password: int = info_data.get("password", 0)
-        self.is_checked_survey: bool = (
-            True if group_data.get("otherYn") == "N" else True
-        )
-        self._register_at: str = data.get("registerDtm", "")
-        self.is_healthy: bool = data.get("isHealthy", True)
-        self.wrong_password_count: int = data.get("wrongPassCnt", 0)
-        self.unread_notice_count: int = data.get("newNoticeCount", 0)
-        self.unchecked_survey_count: int = data.get("extSurveyCount", 0)
+        self.is_checked_survey: bool = user_data.get("isHealthy", True)
+        self.wrong_password_count: int = user_data.get("wrongPassCnt", 0)
+        self.unread_notice_count: int = user_data.get("newNoticeCount", 0)
+        self.additional_survey_count: int = user_data.get("extSurveyCount", 0)
+        self.unchecked_survey_count: int = user_data.get("extSurveyRemainCount", 0)
         self.agreement_required: bool = info_data.get("agreement_required", False)
+        self.is_account_locked: bool = (
+            True if user_data.get("lockYn", False) == "Y" else False
+        )
         self.is_logout: bool = False
 
     def __repr__(self) -> str:
@@ -54,32 +56,18 @@ class User:
 
     async def check(
         self,
-        option1: bool = False,
-        option2: bool = False,
-        option3: bool = False,
         log_name: Optional[str] = None,
     ) -> None:
         """자가진단을 실행합니다.
-        이 설문지는 코로나-19 감염예방을 위하여 학생의 건강 상태를 확인하는 내용입니다.
-        설문에 성실하게 응답하여 주시기 바랍니다.
-        코로나19가 의심되는 경우 진단검사를 받아주세요.
+        모든 데이터는 아니요로 체크됩니다 (2번 문항은 검사하지 않음)
+        ※ 이 설문지는 코로나-19 감염예방을 위하여 학생의 건강 상태를 확인하는 내용입니다.
+        ※ 설문에 성실하게 응답하여 주시기 바랍니다.
+        ※ 코로나19가 의심되는 경우 진단검사를 받아주세요.
+        영문 설문지는 아래 사이트를 참고하세요.
+            - 건강상태 자가진단 페이지: https://hcs.eduro.go.kr/#/survey (Language: English로 설정)
 
         Parameters
         ----------
-        option1: bool
-            학생 본인이 코로나19가 의심되는 아래의 임상증상이 있나요?
-             (주요 임상증상) 발열 (37.5℃ 이상), 기침, 호흡곤란, 오한, 근육통, 두통, 인후통, 후각·미각 소실
-             (단, 코로나19와 관계없이 평소의 기저질환으로 인한 증상인 경우는 ‘아니오’ 선택)
-             기본값은 False(아니요) 입니다.
-        option2: bool
-            학생 본인 또는 동거인이 코로나19 진단검사를 받고 그 결과를 기다리고 있나요?
-            ① 직업특성, 또는 ② 대회참여 등 선제적 예방 목적의 진단검사인 경우는 ‘아니오’ 선택
-            기본값은 False(아니요) 입니다.
-        option3: bool
-            학생 본인 또는 동거인이 방역당국에 의해 현재 자가격리가 이루어지고 있나요?
-            동거인이 자가격리중인 경우, ① 매 등교 희망일로부터 2일 이내 진단검사 결과가 음성인 경우 또는
-            ② 격리 통지를 받은 ‘즉시’ 자가격리된 동거인과 접촉이 없었던 경우는 ‘아니오’ 선택
-            기본값은 False(아니요) 입니다.
         log_name: Optional[str]
             자가진단 로그 이름을 지정합니다.
         """
@@ -94,9 +82,6 @@ class User:
         await self.state.check_survey(
             endpoint=self.school.endpoint,
             token=data.get("token"),
-            option1=option1,
-            option2=option2,
-            option3=option3,
             log_name=log_name,
         )
 
@@ -185,6 +170,35 @@ class User:
             )
             for hospital in response
         ]
+
+    async def get_safety_guidelines(
+        self, response_type: Literal["text", "image"]
+    ) -> Union[str, io.BytesIO]:
+        """
+        학교방역 수칙안내를 가져옵니다
+        COVID-19 Safety and Quarantine Guildlines
+        Parameters
+        ----------
+        response_type: Literal["text", "image"]
+            가져올 형식을 선택합니다.
+            텍스트 타입: text, 이미지 타입: image
+        """
+        if response_type == "text":
+            return covid_19_guidelines
+        elif response_type == "image":
+            route = Route(method="GET", path="/eduro/1.8.1/img/guard.935c0604.png")
+            route.endpoint = "https://rl6cz18qh.toastcdn.net"
+            image_data = await self.state.http_session.request(route)
+            image_byte = await image_data.read()
+            return io.BytesIO(image_byte)
+
+    @classmethod
+    async def get_covid_self_test_guide(cls) -> str:
+        """
+        자가진단키트 사용법 유튜브 링크를 가져옵니다
+        COVID-19 Self-Test
+        """
+        return covid_self_test_guide_youtubeURL
 
     async def logout(self) -> None:
         """자가진단에서 로그아웃합니다."""
