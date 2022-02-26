@@ -1,4 +1,5 @@
-# 자가진단 예제
+# 토큰 자가진단 예제
+# <User>.state_token을 저장하고 추가적인 개인정보 입력 없이 로그인을 할 수 있음.
 
 from asyncio import run
 
@@ -17,7 +18,13 @@ async def self_check() -> None:
         password="4자리 비밀번호",
     )
     user1 = user[-1]  # 첫번째 유저 가져오기
-    await user1.check()  # 자가진단 실행
+    user_token = user1.state_token
+
+    token_user = await client.token_login(
+        school=school[-1], token=user_token, password="4자리 비밀번호"
+    )
+    token_user1 = token_user[-1]
+    await token_user1.check()
 
 
 run(self_check())
