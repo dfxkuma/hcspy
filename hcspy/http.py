@@ -153,7 +153,6 @@ class HTTPClient:
                 schulCrseScCod=level,
                 loginType=search_type,
             )
-            print(route)
         elif search_type == "univ":
             route = url_create_with(
                 "/searchSchool",
