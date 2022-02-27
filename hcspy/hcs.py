@@ -58,11 +58,13 @@ class HCSClient:
             area=area,
             search_type=search_type,
         )
+        try: engOrgNm = school["engOrgNm"]
+        except KeyError: engOrgNm = None
         return [
             School(
                 school["orgCode"],
                 school["kraOrgNm"],
-                school["engOrgNm"],
+                engOrgNm,
                 school["lctnScNm"],
                 school["addres"],
                 "https://" + school["atptOfcdcConctUrl"],
