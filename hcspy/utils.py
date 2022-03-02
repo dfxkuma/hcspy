@@ -59,7 +59,7 @@ def copy_function(function):
         closure=function.__closure__,
     )
     g = functools.update_wrapper(g, function)
-    g.__kwdefaults__ = f.__kwdefaults__
+    g.__kwdefaults__ = function.__kwdefaults__
     return g
 
 
