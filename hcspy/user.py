@@ -5,8 +5,10 @@ from .errors import AlreadyAgreed
 from .model import Board, Hospital, School
 from .http import HTTPClient, Route
 from .data import covid_19_guidelines, covid_self_test_guide_youtubeURL
+from .utils import duplicate, duplicated
 
 
+@duplicated
 class User:
     def __init__(
         self,
@@ -37,6 +39,7 @@ class User:
     def __repr__(self) -> str:
         return f"<User id={self.id} name={self.name} is_logout={self.is_logout}>"
 
+    @duplicate("has_password")
     async def password_exist(self) -> bool:
         """비밀번호를 설정했는지 확인합니다."""
         return await self.state.password_exist(
@@ -54,8 +57,12 @@ class User:
             endpoint=self.school.endpoint, token=self.state_token, password=password
         )
 
+    @duplicate("survey", "register_survey", "submit_survey")
     async def check(
         self,
+        option1: bool = False,
+        option2: Union[bool, None] = None,
+        option3: bool = False,
         log_name: Optional[str] = None,
     ) -> None:
         """자가진단을 실행합니다.
@@ -68,6 +75,15 @@ class User:
 
         Parameters
         ----------
+        option1:
+            학생 본인이 코로나19 감염에 의심되는 아래의 임상증상*이 있나요?
+            * 주요 임상증상 : 발열(37.5℃), 기침, 호흡곤란, 오한, 근육통, 두통, 인후통, 후각·미각소실
+            ※ 단 학교에서 선별진료소 검사결과(음성)를 확인 후 등교를 허용한 경우, 또는 선천성질환·만성질환(천식 등)으로 인한 증상인 경우 ‘아니오’를 선택하세요
+        option2:
+            학생은 오늘(어제 저녁 포함) 신속항원검사(자가진단)를 실시했나요?
+            코로나19 완치자의 경우, 확진일로부터 45일간 신속항원검사(자가진단)는 실시하지 않음(“검사하지 않음”으로 선택)
+        option3:
+            학생 본인 또는 동거인이 PCR 검사를 받고 그 결과를 기다리고 있나요?
         log_name: Optional[str]
             자가진단 로그 이름을 지정합니다.
         """
@@ -82,6 +98,9 @@ class User:
         await self.state.check_survey(
             endpoint=self.school.endpoint,
             token=data.get("token"),
+            option1=option1,
+            option2=option2,
+            option3=option3,
             log_name=log_name,
         )
 
@@ -100,6 +119,7 @@ class User:
         )
         self.password = password
 
+    @duplicate("agree_tos")
     async def update_agreement(self) -> None:
         """
         자가진단 이용약관에 동의합니다.
@@ -110,6 +130,7 @@ class User:
             endpoint=self.school.endpoint, token=self.state_token
         )
 
+    @duplicate("get_announcement")
     async def get_notice(self, page: int = 0) -> List[Board]:
         """자가진단 공지사항을 가져옵니다.
         Parameters
@@ -171,6 +192,7 @@ class User:
             for hospital in response
         ]
 
+    @duplicate("get_covid19_guidelines")
     async def get_safety_guidelines(
         self, response_type: Literal["text", "image"]
     ) -> Union[str, io.BytesIO]:
@@ -192,12 +214,18 @@ class User:
             image_byte = await image_data.read()
             return io.BytesIO(image_byte)
 
-    @classmethod
-    async def get_covid_self_test_guide(cls) -> str:
+    @duplicate("get_hcs_guide")
+    async def get_covid_self_test_guide(self) -> str:
         """
         자가진단키트 사용법 유튜브 링크를 가져옵니다
         COVID-19 Self-Test
         """
+        _ = self
+        return covid_self_test_guide_youtubeURL
+
+    @property
+    def covid_self_test_guide(self) -> str:
+        _ = self
         return covid_self_test_guide_youtubeURL
 
     async def logout(self) -> None:

@@ -6,8 +6,10 @@ from .errors import AuthorizeError
 from .http import HTTPClient, Route
 from .model import School
 from .user import User
+from .utils import duplicate, duplicated
 
 
+@duplicated
 class HCSClient:
     """ "https://hcs.eduro.go.kr api 레퍼 Client 입니다."""
 
@@ -32,6 +34,7 @@ class HCSClient:
     def endpoint(self) -> str:
         return Route.BASE
 
+    @duplicate("search_organization", "search_university")
     async def search_school(
         self,
         search_type: str,
@@ -96,6 +99,7 @@ class HCSClient:
         )
         return response
 
+    @duplicate("login_with_token")
     async def token_login(
         self, school: School, token: str, password: str
     ) -> List[User]:
@@ -141,6 +145,7 @@ class HCSClient:
             for user in group
         ]
 
+    @duplicate("get_group")
     async def login(
         self,
         school: School,
