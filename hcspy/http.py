@@ -561,3 +561,7 @@ class HTTPClient:
     async def close(self) -> None:
         """http 세션을 닫습니다"""
         await self._http.session.close()
+
+    @property
+    def session(self):
+        return self._session

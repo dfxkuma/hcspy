@@ -1,6 +1,7 @@
 from typing import List, Optional, Any
 
 import aiohttp
+import asyncio
 
 from .errors import AuthorizeError
 from .http import HTTPClient, Route
@@ -33,6 +34,15 @@ class HCSClient:
     @property
     def endpoint(self) -> str:
         return Route.BASE
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        await self.close()
+
+    async def close(self):
+        await self._http_client.close()
 
     @duplicate("search_organization", "search_university")
     async def search_school(
