@@ -1,5 +1,7 @@
 from base64 import b64decode, b64encode
 from typing import Dict, List, Optional, Any
+import types
+import functools
 
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.Cipher.PKCS1_v1_5 import PKCS115_Cipher
@@ -44,3 +46,40 @@ def url_create_with(url: str, **query: Any) -> str:
         if v is not None:
             _url += f"{q}={v}&"
     return _url[:-1]
+
+
+def copy_function(function):
+    g = types.FunctionType(
+        function.__code__,
+        function.__globals__,
+        name=function.__name__,
+        argdefs=function.__defaults__,
+        closure=function.__closure__,
+    )
+    g = functools.update_wrapper(g, function)
+    g.__kwdefaults__ = f.__kwdefaults__
+    return g
+
+
+def duplicate(*aliases):
+    def decorator(function):
+        new_function = copy_function(function)
+        new_function.__doc__ = "Duplicate for :meth:`{0.__name__}`.".format(function)
+        function._aliases = {a: new_function for a in aliases}
+        return function
+
+    return decorator
+
+
+def duplicated(cls):
+    original_methods = cls.__dict__.copy()
+    for method in original_methods.values():
+        if hasattr(method, "_aliases"):
+            for name, func in method._aliases.items():
+                if name in original_methods.keys():
+                    raise ValueError(
+                        "{} already existed in {}, "
+                        "cannot create alias.".format(name, cls.__name__)
+                    )
+                setattr(cls, name, func)
+    return cls
