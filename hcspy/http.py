@@ -267,6 +267,9 @@ class HTTPClient:
         self,
         endpoint: str,
         token: str,
+        option1: bool,
+        option2: Union[bool, None],
+        option3: bool,
         log_name: Optional[str] = None,
     ) -> Any:
         """자가진단을 모두 증상 없음으로 체크합니다.
@@ -277,20 +280,30 @@ class HTTPClient:
             학교 api 주소를 입력합니다.
         token: str
             사용자 토큰을 입력합니다.
-
+        option1:
+            옵션 1번입니다.
+        option2:
+            옵션 2번입니다.
+        option3:
+            옵션 3번입니다.
         log_name: Optional[str]
             자가진단 로그 이름을 지정합니다.
         """
         route = Route("POST", "/registerServey")
         route.endpoint = endpoint
+        form7_input = None
+        if not option2 is None:
+            input_data_packed = {False: "0", True: "1"}
+            form7_input = input_data_packed[option2]
+
         data = {
-            "rspns01": "1",
-            "rspns02": "1",
-            "rspns03": None,
+            "rspns01": "2" if option1 else "1",
+            "rspns02": "2" if option3 else "1",
+            "rspns03": "1" if option2 is None else None,
             "rspns04": None,
             "rspns05": None,
             "rspns06": None,
-            "rspns07": "0",
+            "rspns07": form7_input,
             "rspns08": "0",
             "rspns09": "0",
             "rspns10": None,
@@ -299,7 +312,9 @@ class HTTPClient:
             "rspns13": None,
             "rspns14": None,
             "rspns15": None,
-            "rspns00": "Y",
+            "rspns00": "Y"
+            if option1 == False and option2 is None and option3 == False
+            else "N",
             "deviceUuid": "",
             "upperToken": token,
             "upperUserNameEncpt": log_name,
