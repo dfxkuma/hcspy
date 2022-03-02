@@ -2,6 +2,8 @@ from base64 import b64decode, b64encode
 from typing import Dict, List, Optional, Any
 import types
 import functools
+import jwt
+import random
 
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.Cipher.PKCS1_v1_5 import PKCS115_Cipher
@@ -83,3 +85,15 @@ def duplicated(cls):
                     )
                 setattr(cls, name, func)
     return cls
+
+
+def generate_secret_key(length: int = 300) -> str:
+    return hex(random.getrandbits(length))
+
+
+def encode_data(data: dict, key: str) -> str:
+    return str(jwt.encode(data, key, algorithm="HS256"))
+
+
+def decode_data(string: str, key: str) -> dict:
+    return jwt.decode(string, key, algorithms=["HS256"])
