@@ -4,5 +4,5 @@ from .model import Board, School
 from .user import User
 from .utils import *
 
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 __all__ = ("HCSClient", "HTTPClient", "HTTPRequest", "Board", "School", "User")

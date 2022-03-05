@@ -4,7 +4,7 @@ from typing import Any, ClassVar, Dict, Literal, Optional, Union
 
 import aiohttp
 
-from .data import school_areas, school_levels
+from .data import school_areas, school_levels, hcs_client_version
 from .errors import AuthorizeError, HTTPException, PasswordLengthError, SchoolNotFound
 from .keypad import KeyPad
 from .transkey import mTransKey
@@ -297,6 +297,7 @@ class HTTPClient:
             form7_input = input_data_packed[option2]
 
         data = {
+            "clientVersion": hcs_client_version,
             "rspns01": "2" if option1 else "1",
             "rspns02": "2" if option3 else "1",
             "rspns03": "1" if option2 is None else None,
@@ -304,8 +305,8 @@ class HTTPClient:
             "rspns05": None,
             "rspns06": None,
             "rspns07": form7_input,
-            "rspns08": "0",
-            "rspns09": "0",
+            "rspns08": None,
+            "rspns09": None,
             "rspns10": None,
             "rspns11": None,
             "rspns12": None,
@@ -319,6 +320,7 @@ class HTTPClient:
             "upperToken": token,
             "upperUserNameEncpt": log_name,
         }
+        print(data)
         response = await self._http.request(
             route, json=data, headers={"Authorization": token}
         )

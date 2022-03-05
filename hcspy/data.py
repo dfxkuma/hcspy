@@ -1,4 +1,7 @@
-from typing import Dict, List
+from typing import Dict, List, ClassVar
+
+
+hcs_client_version: ClassVar[str] = "1.8.8"
 
 school_areas: Dict[str, List[str]] = {
     "area01": ["서울", "서울시", "서울교육청", "서울시교육청", "서울특별시", "서울특별시교육청"],

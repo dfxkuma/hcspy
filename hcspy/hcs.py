@@ -129,6 +129,9 @@ class HCSClient:
             token=token,
             password=password,
         )
+        if user_token.get("isError") is True and user_token.get("errorCode") == 1001:
+            failed_count = user_token["data"].get("failCnt")
+            raise AuthorizeError(f"비밀번호가 다릅니다 (시도 횟수: {failed_count}/5)")
         group = await self._http_client.get_group(
             endpoint=school.endpoint, token=user_token["token"]
         )
@@ -194,6 +197,9 @@ class HCSClient:
         user_token = await self._http_client.use_security_keypad(
             endpoint=school.endpoint, token=user_data.get("token"), password=password
         )
+        if user_token.get("isError") is True and user_token.get("errorCode") == 1001:
+            failed_count = user_token["data"].get("failCnt")
+            raise AuthorizeError(f"비밀번호가 다릅니다 (시도 횟수: {failed_count}/5)")
         group = await self._http_client.get_group(
             endpoint=school.endpoint, token=user_token["token"]
         )
