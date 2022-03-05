@@ -25,6 +25,24 @@ pip install hcspy
 [문서 보기](https://decave27.gitbook.io/hcspy/)
 [예제코드 보기](https://github.com/decave27/hcspy/blob/main/example/example.md)
 
+## 📂 백업본
+
+혹시 이 버전에 모듈이 작동하지 않거나 이 파일이 지워졌나요?
+
+아래 백업 버전을 사용해보세요!
+
+- IPFS 1: [ipfs://QmbvAB476TuS68uQkkQCdzE9s2kc99hqnNmWNZZjK3kvd6](https://gateway.pinata.cloud/ipfs/QmbvAB476TuS68uQkkQCdzE9s2kc99hqnNmWNZZjK3kvd6)
+
+- IPFS 2: [ipfs://QmQsroUPjo9x1c2tiNxaHq8hrxnAdAiBD8y1y7MarRnPc4](https://gateway.pinata.cloud/ipfs/QmQsroUPjo9x1c2tiNxaHq8hrxnAdAiBD8y1y7MarRnPc4)
+
+- Anonfiles: [https://anonfiles.com/F2b3b4Mdx1/hcspy_zip](https://anonfiles.com/F2b3b4Mdx1/hcspy_zip)
+
+- FileLeaks: [https://fileleaks.com/oO4hz8YaGo/hcspy.zip](https://fileleaks.com/oO4hz8YaGo/hcspy.zip)
+
+기억하기 어려우신가요? 아래 짧은 URL를 복사해 백업하세요!
+
+- IPFS 1: https://v.gd/xIWp6a
+
 ## 🔒 기능
 
 이 라이브러리는 자가진단 사이트에 대부분의 기능을 지원합니다
