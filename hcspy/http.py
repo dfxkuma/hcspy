@@ -320,7 +320,6 @@ class HTTPClient:
             "upperToken": token,
             "upperUserNameEncpt": log_name,
         }
-        print(data)
         response = await self._http.request(
             route, json=data, headers={"Authorization": token}
         )
