@@ -3,15 +3,25 @@ from json import dumps
 from typing import Any, ClassVar, Dict, Literal, Optional, Union
 
 import aiohttp
+from bs4 import BeautifulSoup
 
-from .data import school_areas, school_levels, hcs_client_version
-from .errors import AuthorizeError, HTTPException, PasswordLengthError, SchoolNotFound
+from .data import school_areas, school_levels
+from .errors import (
+    AuthorizeError,
+    HTTPException,
+    PasswordLengthError,
+    OrganizationNotFound,
+    WrongInformationError,
+    AccessTokenExpired,
+)
 from .keypad import KeyPad
 from .transkey import mTransKey
 from .utils import encrypt_login, multi_finder, url_create_with
 
 
 def content_type(response: Any) -> Any:
+    if response.content_type == "text/html":
+        return response.text()
     with contextlib.suppress(Exception):
         return response.json()
     return response.text()
@@ -123,25 +133,25 @@ class HTTPClient:
     def http_session(self) -> HTTPRequest:
         return self._http
 
-    async def search_school(
+    async def search_organization(
         self,
-        search_type: str,
+        search_type: Literal["school", "univ", "office"],
         name: str,
         level: Optional[str] = None,
         area: Optional[str] = None,
     ) -> Any:
-        """학교를 검색합니다
+        """기관을 검색합니다
 
         Parameters
          ----------
-        search_type: str
+        search_type: Literal["school", "univ", "office"]
             기관 타입을 선택합니다.
         name: str
-            검색할 학교 이름이나 키워드를 입력합니다
+            검색할 기관 이름이나 키워드를 입력합니다
         level: Optional[str]
-            학교 유형을 선택합니다.
+            학교(기관) 유형을 선택합니다. 이 옵션은 기관이 학교인 경우만 사용할 수 있습니다.
         area: Optional[str]
-            학교 지역을 선택합니다.
+            학교(기관) 지역을 선택합니다. 이 옵션은 기관이 학교인 경우만 사용할 수 있습니다.
         """
         if search_type == "school":
             level = multi_finder(data=school_levels, keyword=level, prefix="level")
@@ -159,12 +169,18 @@ class HTTPClient:
                 orgName=name,
                 loginType=search_type,
             )
+        elif search_type == "office":
+            route = url_create_with(
+                "/searchSchool",
+                orgName=name,
+                loginType=search_type,
+            )
         else:
             raise NotImplemented(f"{search_type} 유형 기관은 지원하지 않습니다.")
         response = await self._http.request(Route("GET", route))
         if len(response["schulList"]) == 0:
-            raise SchoolNotFound(f"{name} 학교를 찾지 못했습니다.")
-        return response["schulList"]
+            raise OrganizationNotFound(f"{name} 기관을 찾지 못했습니다.")
+        return response["schulList"], response["key"]
 
     async def find_user(
         self,
@@ -172,7 +188,8 @@ class HTTPClient:
         code: str,
         name: str,
         birthday: str,
-        school_type: str = "school",
+        organization_type: str,
+        search_key: str,
     ) -> Any:
         """
         api를 사용하기 위한 토큰을 발급합니다.
@@ -180,15 +197,17 @@ class HTTPClient:
         Parameters
         ----------
         endpoint: str
-            학교 api 주소를 입력합니다.
+            기관 api 주소를 입력합니다.
         code: str
-            학교 코드를 입력합니다.
+            기관 코드를 입력합니다.
         name: str
             사용자 이름을 입력합니다.
         birthday: str
             본인의 생년월일 6자리를 입력합니다.
-        school_type: str
+        organization_type: str
             기관 타입을 선택합니다.
+        search_key: str
+            기관 검색 키를 입력합니다.
         """
         route = Route("POST", "/v2/findUser")
         route.endpoint = endpoint
@@ -197,16 +216,21 @@ class HTTPClient:
                 route,
                 json={
                     "birthday": encrypt_login(birthday),
-                    "loginType": school_type,
+                    "loginType": organization_type,
                     "name": encrypt_login(name),
                     "orgCode": code,
+                    "searchKey": search_key,
                     "stdntPHo": None,
                 },
             )
             return response
         except HTTPException as e:
-            if e.code == 500:
-                raise AuthorizeError("입력한 정보가 일치하지 않습니다.")
+            if e.message.get("message") == "소속학교(기관)에 사용자 정보 확인 후 다시 시도하십시오.":
+                raise WrongInformationError(e.message.get("message"))
+            elif e.message.get("message") == "학교 찾기 후 입력시간이 초과되었습니다":
+                raise AccessTokenExpired(e.message.get("message"))
+            else:
+                raise AuthorizeError("입력한 정보가 일치하지 않습니다")
 
     async def update_agreement(self, endpoint: str, token: str) -> Any:
         """
@@ -238,7 +262,7 @@ class HTTPClient:
         route = Route("POST", "/v2/hasPassword")
         route.endpoint = endpoint
         response = await self._http.request(route, headers={"Authorization": token})
-        return bool(response)
+        return response
 
     async def register_password(self, endpoint: str, token: str, password: str) -> Any:
         """
@@ -262,6 +286,23 @@ class HTTPClient:
             route, json=data, headers={"Authorization": token}
         )
         return response
+
+    async def get_client_version(self, host: str = "https://hcs.eduro.go.kr") -> Any:
+        """
+        자가진단 사이트에 클라이언트 버전을 가져옵니다.
+
+        Parameters
+        ----------
+        host: str
+            자가진단 사이트 호스트를 입력합니다. 기본값은 https://hcs.eduro.go.kr 입니다.
+        """
+        route = Route("GET", "/")
+        route.endpoint = host
+        resource = await self._http.request(route, json={}, headers={})
+        bs4_frame = BeautifulSoup(resource, "html.parser")
+        static_file_href = bs4_frame.head.link["href"]
+        version = str(static_file_href.strip("/").split("/")[-2])
+        return version
 
     async def check_survey(
         self,
@@ -296,8 +337,10 @@ class HTTPClient:
             input_data_packed = {False: "0", True: "1"}
             form7_input = input_data_packed[option2]
 
+        version = await self.get_client_version()
+
         data = {
-            "clientVersion": hcs_client_version,
+            "clientVersion": version,
             "rspns01": "2" if option1 else "1",
             "rspns02": "2" if option3 else "1",
             "rspns03": "1" if option2 is None else None,
