@@ -1,7 +1,5 @@
-from typing import Dict, List, ClassVar
+from typing import Dict, List
 
-
-hcs_client_version: ClassVar[str] = "1.9.3"
 
 school_areas: Dict[str, List[str]] = {
     "area01": ["서울", "서울시", "서울교육청", "서울시교육청", "서울특별시", "서울특별시교육청"],
@@ -65,5 +63,3 @@ covid_19_guidelines = """
 ✅ 사적모임을 자제하고 대면 접촉 줄이기
 ✅ 아프면 검사하고 집에 머무르기
 """
-
-covid_self_test_guide_youtubeURL = "https://www.youtube.com/watch?v=nv7tR1jsGzs"
