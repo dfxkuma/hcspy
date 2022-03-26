@@ -13,7 +13,15 @@ class HTTPException(HCSException):
         super().__init__(f"{self.code} {self.message}")
 
 
-class SchoolNotFound(HCSException):
+class OrganizationNotFound(HCSException):
+    pass
+
+
+class WrongInformationError(HCSException):
+    pass
+
+
+class AccessTokenExpired(HCSException):
     pass
 
 
