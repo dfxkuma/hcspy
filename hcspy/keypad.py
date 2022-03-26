@@ -3,7 +3,7 @@ from typing import List
 
 
 class KeyPad:
-    def __init__(self, crypto, key_type, skip_data, keys, initTime) -> None:
+    def __init__(self, crypto, key_type, skip_data, keys, init_time) -> None:
         if key_type != "number":
             raise Exception("Only Number")
 
@@ -11,7 +11,7 @@ class KeyPad:
         self.key_type = key_type
         self.skip_data = skip_data
         self.keys = keys
-        self.initTime = initTime
+        self.init_time = init_time
 
     def get_geo(self, message) -> List:
         geos = []
@@ -68,7 +68,7 @@ class KeyPad:
 
     def _time_to_bytes(self):
         out = []
-        for char in self.initTime:
+        for char in self.init_time:
             if char.isalpha():
                 out.append(ord(char))
             else:
