@@ -2,7 +2,7 @@
 
 [![Send mail](https://img.shields.io/badge/-inspiredlp0@gmail.com-63d863?style=flat-square&logo=gmail&logoColor=white&link=mailto:inspiredlp0@gmail.com)](mailto:inspiredlp0@gmail.com) [![Badge](https://img.shields.io/pypi/v/hcspy?label=Version&style=flat-square)](https://pypi.org/project/hcspy/) [![Send mail](https://img.shields.io/pypi/dm/hcspy?color=orange&label=Downloads&style=flat-square)](https://pypi.org/project/hcspy/) [![Licence](https://img.shields.io/pypi/l/hcspy?label=License&style=flat-square)](https://github.com/inspiredlp0/hcspy/blob/main/LICENSE) [![Badge](https://img.shields.io/pypi/status/hcspy?color=%230099ff&label=Status&style=flat-square)]() <br>
 
-파이썬 코로나 자가잔단 라이브러리입니다.
+파이썬 코로나 자가잔단 라이브러리입니다. 대부분의 모든 자가진단 사이트에 기능을 지원합니다.
 
 ## ⚠️ 주의사항
 
@@ -12,7 +12,8 @@
 - 이 라이브러리를 상업 목적으로 사용하지 마세요.
 - 이 라이브러리는 언제든 수정되거나 삭제될 수 있습니다.
 - 이 라이브러리는 비정기적으로 업데이트됩니다. Notification을 설정해 업데이트 알림을 받으세요.
-- 이 라이브러리는 오로지 공부 목적으로 개발한 라이브러리입니다. 사소한 버그가 있거나 코드 가독성이 떨어질 수 있습니다.
+- 이 라이브러리는 오로지 공부 목적으로 개발한 라이브러리입니다. 
+  사소한 버그가 있거나 코드 가독성이 떨어질 수 있습니다.
 
 
 ## 📥다운로드
@@ -63,7 +64,6 @@ pip install hcspy
 ## 😆 기여 및 참고
 
 ⭐ [331leo/hcskr_python](https://github.com/331leo/hcskr_python)
-
 ⭐ [covid-hcs/transkey-py](https://github.com/covid-hcs/transkey-py)
 
 
