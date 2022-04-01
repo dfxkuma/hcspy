@@ -1,8 +1,18 @@
 # HCSPY
 
-[![Send mail](https://img.shields.io/badge/-decave27@gmail.com-63d863?style=flat-square&logo=gmail&logoColor=white&link=mailto:decave27@gmail.com)](mailto:decave27@gmail.com) [![Badge](https://img.shields.io/pypi/v/hcspy?label=Version&style=flat-square)](https://pypi.org/project/hcspy/) [![Send mail](https://img.shields.io/pypi/dm/hcspy?color=orange&label=Downloads&style=flat-square)](https://pypi.org/project/hcspy/) [![Licence](https://img.shields.io/pypi/l/hcspy?label=License&style=flat-square)](https://github.com/decave27/hcspy/blob/main/LICENSE) [![Badge](https://img.shields.io/pypi/status/hcspy?color=%230099ff&label=Status&style=flat-square)]() <br>
+[![Send mail](https://img.shields.io/badge/-inspiredlp0@gmail.com-63d863?style=flat-square&logo=gmail&logoColor=white&link=mailto:inspiredlp0@gmail.com)](mailto:inspiredlp0@gmail.com) [![Badge](https://img.shields.io/pypi/v/hcspy?label=Version&style=flat-square)](https://pypi.org/project/hcspy/) [![Send mail](https://img.shields.io/pypi/dm/hcspy?color=orange&label=Downloads&style=flat-square)](https://pypi.org/project/hcspy/) [![Licence](https://img.shields.io/pypi/l/hcspy?label=License&style=flat-square)](https://github.com/inspiredlp0/hcspy/blob/main/LICENSE) [![Badge](https://img.shields.io/pypi/status/hcspy?color=%230099ff&label=Status&style=flat-square)]() <br>
 
 파이썬 코로나 자가잔단 라이브러리입니다.
+
+## ⚠️ 주의사항
+
+### 이 라이브러리를 사용하는 모든 책임은 사용자에게 있습니다.
+
+- 다른 사용자나 서비스에 개인정보를 제출하지 마세요.
+- 이 라이브러리를 상업 목적으로 사용하지 마세요.
+- 이 라이브러리는 언제든 수정되거나 삭제될 수 있습니다.
+- 이 라이브러리는 비정기적으로 업데이트됩니다. Notification을 설정해 업데이트 알림을 받으세요.
+- 이 라이브러리는 오로지 공부 목적으로 개발한 라이브러리입니다. 사소한 버그가 있거나 코드 가독성이 떨어질 수 있습니다.
 
 
 ## 📥다운로드
@@ -17,31 +27,6 @@ pip install hcspy
 ```
 
 오류가 나는 경우, `python -m pip install --upgrade pip` 로 pip를 업데이트 해주세요.
-
-## 🤖사용법
-
-이 라이브러리는 비동기만 지원합니다.
-
-[문서 보기](https://decave27.gitbook.io/hcspy/)
-[예제코드 보기](https://github.com/decave27/hcspy/blob/main/example/example.md)
-
-## 📂 백업본
-
-혹시 이 버전에 모듈이 작동하지 않거나 이 파일이 지워졌나요?
-
-아래 백업 버전을 사용해보세요!
-
-- IPFS 1: [ipfs://QmbvAB476TuS68uQkkQCdzE9s2kc99hqnNmWNZZjK3kvd6](https://gateway.pinata.cloud/ipfs/QmbvAB476TuS68uQkkQCdzE9s2kc99hqnNmWNZZjK3kvd6)
-
-- IPFS 2: [ipfs://QmQsroUPjo9x1c2tiNxaHq8hrxnAdAiBD8y1y7MarRnPc4](https://gateway.pinata.cloud/ipfs/QmQsroUPjo9x1c2tiNxaHq8hrxnAdAiBD8y1y7MarRnPc4)
-
-- Anonfiles: [https://anonfiles.com/F2b3b4Mdx1/hcspy_zip](https://anonfiles.com/F2b3b4Mdx1/hcspy_zip)
-
-- FileLeaks: [https://fileleaks.com/oO4hz8YaGo/hcspy.zip](https://fileleaks.com/oO4hz8YaGo/hcspy.zip)
-
-기억하기 어려우신가요? 아래 짧은 URL를 복사해 백업하세요!
-
-- IPFS 1: https://v.gd/xIWp6a
 
 ## 🔒 기능
 
@@ -69,14 +54,6 @@ pip install hcspy
 
 ### 추후지원
 - 참여자 추가
-
-## ⚠️ 주의사항
-
-### 이 라이브러리를 사용하는 모든 책임은 사용자에게 있습니다.
-
-- 다른 사용자나 서비스에게 개인정보를 제출하지 마세요.
-- 이 라이브러리를 상업 목적으로 사용하지 마세요.
-- 이 라이브러리는 언제든 수정되거나 삭제될 수 있습니다.
 
 ## 💡 TIP
 - <HCSClient>.token_login을 이용해 기존에 발급한 토큰으로 로그인할 수 있어요!
