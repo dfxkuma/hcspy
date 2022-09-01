@@ -26,12 +26,12 @@ with open(f"{path}/README.md", encoding="UTF8") as f:
 
 setup(
     name="hcspy",
-    author="decave27",
-    author_email="decave27@gmail.com",
-    url="https://github.com/decave27/hcspy",
+    author="monotaged",
+    author_email="monotaged@protonmail.com",
+    url="https://github.com/monotaged/hcspy",
     project_urls={
-        "Source": "https://github.com/decave27/hcspy",
-        "Tracker": "https://github.com/decave27/hcspy/issues",
+        "Source": "https://github.com/monotaged/hcspy",
+        "Tracker": "https://github.com/monotaged/hcspy/issues",
     },
     version=version,
     packages=find_packages(),
