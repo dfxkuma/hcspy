@@ -1,13 +1,13 @@
-# HCSPY
+# 파이썬 코로나 자가진단 라이브러리
 
-[![Send mail](https://img.shields.io/badge/-monotaged@protonmail.com-63d863?style=flat-square&logo=gmail&logoColor=white&link=mailto:monotaged@protonmail.com)](mailto:inspiredlp0@gmail.com)]
+[![Send mail](https://img.shields.io/badge/-monotaged@protonmail.com-63d863?style=flat-square&logo=gmail&logoColor=white&link=mailto:monotaged@protonmail.com)](mailto:inspiredlp0@gmail.com)
 
 파이썬 코로나 자가잔단 라이브러리입니다. 대부분의 모든 자가진단 사이트에 기능을 지원합니다.
 
 ## ⚠️ 주의사항
 
 ### 이 라이브러리를 사용하는 모든 책임은 사용자에게 있습니다.
-### 만약 건강상태에 문제가 있다면, 이 라이브러리를 이용한 매크로 사용을 중지를 권장합니다.
+### 만약 건강상태에 문제가 있다면, 이 라이브러리를 이용한 매크로 사용 중지를 권장합니다.
 
 
 ## 📥다운로드
