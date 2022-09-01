@@ -1,6 +1,6 @@
 # HCSPY
 
-[![Send mail](https://img.shields.io/badge/-monotaged@protonmail.com-63d863?style=flat-square&logo=gmail&logoColor=white&link=mailto:monotaged@protonmail.com)](mailto:inspiredlp0@gmail.com
+[![Send mail](https://img.shields.io/badge/-monotaged@protonmail.com-63d863?style=flat-square&logo=gmail&logoColor=white&link=mailto:monotaged@protonmail.com)](mailto:inspiredlp0@gmail.com)]
 
 파이썬 코로나 자가잔단 라이브러리입니다. 대부분의 모든 자가진단 사이트에 기능을 지원합니다.
 
