@@ -1,6 +1,4 @@
-# 파이썬 코로나 자가진단 라이브러리
-
-[![Send mail](https://img.shields.io/badge/-monotaged@protonmail.com-63d863?style=flat-square&logo=gmail&logoColor=white&link=mailto:monotaged@protonmail.com)](mailto:inspiredlp0@gmail.com)
+# 파이썬 코로나 자가진단 라이브러리 (지원종료)
 
 파이썬 코로나 자가잔단 라이브러리입니다. 대부분의 모든 자가진단 사이트에 기능을 지원합니다.
 
@@ -21,7 +19,7 @@
 윈도우나 리눅스의 터미널에서 다음과 같이 입력합니다.
 
 ```shell
-pip install git+https://github.com/monotaged/hcspy.git
+pip install git+https://github.com/jwickfil7/hcspy.git
 ```
 
 오류가 나는 경우, `python -m pip install --upgrade pip` 로 pip를 업데이트 해주세요.
@@ -30,6 +28,7 @@ pip install git+https://github.com/monotaged/hcspy.git
 
 이 라이브러리는 자가진단 사이트에 대부분의 기능을 지원합니다
 
+예) 
 - 로그인
 - 로그아웃
 - 비밀번호 변경
@@ -50,9 +49,6 @@ pip install git+https://github.com/monotaged/hcspy.git
 - 학교 방역수칙 안내 가져오기
 - 자가진단 클라이언트 버전 가져오기
 
-### 추후지원
-- 참여자 추가
-
 ## 💡 TIP
 - <HCSClient>.token_login을 이용해 기존에 발급한 토큰으로 로그인할 수 있어요!
 - client에 session을 입력하면 기존 세션을 사용하여 요청할 수 있어요!
@@ -62,11 +58,3 @@ pip install git+https://github.com/monotaged/hcspy.git
 
 ⭐ [331leo/hcskr_python](https://github.com/331leo/hcskr_python)
 ⭐ [covid-hcs/transkey-py](https://github.com/covid-hcs/transkey-py)
-
-
-
-
-
-
-
-
